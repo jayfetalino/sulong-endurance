@@ -4,7 +4,7 @@
 // to get automatically linked to their coach.
 // ─────────────────────────────────────────────────────────
 'use client'
-
+import { useSearchParams } from 'next/navigation'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
@@ -15,7 +15,11 @@ export default function SignupPage() {
   const [email, setEmail]           = useState('')
   const [password, setPassword]     = useState('')
   const [role, setRole]             = useState<'coach' | 'athlete'>('athlete')
-  const [inviteCode, setInviteCode] = useState('')
+   const searchParams = useSearchParams()
+  const [inviteCode, setInviteCode] = useState(
+    searchParams.get('code')?.toUpperCase() ?? ''
+  )
+
   // inviteCode only matters when role === 'athlete'
 
   const [error, setError]     = useState<string | null>(null)

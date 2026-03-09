@@ -19,6 +19,7 @@ export default function CoachDashboard() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [athletes, setAthletes] = useState<Profile[]>([])
   const [loading, setLoading] = useState(true)
+  const [showInviteModal, setShowInviteModal] = useState(false)
   const router = useRouter()
   const supabase = createSupabaseBrowserClient()
 
@@ -120,7 +121,9 @@ export default function CoachDashboard() {
             <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-bold">Your Athletes</h2>
-                <button className="bg-cyan-500 hover:bg-cyan-400 text-gray-950 font-bold text-sm px-4 py-2 rounded-lg transition-colors">
+                <button
+                  onClick={() => setShowInviteModal(true)}
+                  className="bg-cyan-500 hover:bg-cyan-400 text-gray-950 font-bold text-sm px-4 py-2 rounded-lg transition-colors">
                   + Add Athlete
                 </button>
               </div>
@@ -152,10 +155,14 @@ export default function CoachDashboard() {
                         </div>
                       </div>
                       <div className="flex gap-2">
-                        <button className="text-xs bg-gray-700 hover:bg-gray-600 px-3 py-1.5 rounded-lg transition-colors">
+                        <button
+                          onClick={() => router.push(`/calendar?athlete=${athlete.id}`)}
+                          className="text-xs bg-gray-700 hover:bg-gray-600 px-3 py-1.5 rounded-lg transition-colors">
                           View Plan
                         </button>
-                        <button className="text-xs bg-gray-700 hover:bg-gray-600 px-3 py-1.5 rounded-lg transition-colors">
+                        <button
+                          onClick={() => router.push(`/workouts/new?athlete=${athlete.id}`)}
+                          className="text-xs bg-gray-700 hover:bg-gray-600 px-3 py-1.5 rounded-lg transition-colors">
                           Add Workout
                         </button>
                       </div>
@@ -240,6 +247,90 @@ export default function CoachDashboard() {
 
         </div>
       </main>
+    {/* ── INVITE MODAL ── */}
+      {showInviteModal && (
+        <div
+          className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
+          onClick={() => setShowInviteModal(false)}
+        >
+          <div
+            className="bg-gray-900 border border-gray-700 rounded-2xl p-8 w-full max-w-md"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold">Add an Athlete</h2>
+              <button
+                onClick={() => setShowInviteModal(false)}
+                className="text-gray-500 hover:text-white text-xl"
+              >✕</button>
+            </div>
+
+            {/* Two ways to invite */}
+            <div className="space-y-5">
+
+              {/* Option 1: Share the link */}
+              <div className="bg-gray-800 border border-gray-700 rounded-xl p-5">
+                <h3 className="font-bold mb-1">🔗 Share Signup Link</h3>
+                <p className="text-sm text-gray-400 mb-3">
+                  Send this link to your athlete. It pre-fills your invite code automatically.
+                </p>
+                <div className="flex gap-2">
+                  <input
+                    readOnly
+                    value={`${typeof window !== 'undefined' ? window.location.origin : ''}/signup?code=${(profile as any)?.invite_code}`}
+                    className="flex-1 bg-gray-900 border border-gray-600 text-cyan-400 text-xs rounded-lg px-3 py-2.5 font-mono"
+                  />
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(
+                        `${window.location.origin}/signup?code=${(profile as any)?.invite_code}`
+                      )
+                      alert('Link copied!')
+                    }}
+                    className="bg-cyan-500 hover:bg-cyan-400 text-gray-950 font-bold text-sm px-4 rounded-lg transition-colors"
+                  >
+                    Copy
+                  </button>
+                </div>
+              </div>
+
+              {/* Option 2: Share the code */}
+              <div className="bg-gray-800 border border-gray-700 rounded-xl p-5">
+                <h3 className="font-bold mb-1">🔑 Share Invite Code</h3>
+                <p className="text-sm text-gray-400 mb-3">
+                  Athletes enter this code manually at signup.
+                </p>
+                <div className="flex gap-2 items-center">
+                  <div className="flex-1 bg-gray-900 border border-gray-600 rounded-xl px-4 py-3 text-center">
+                    <span className="text-3xl font-mono font-bold tracking-widest text-cyan-400">
+                      {(profile as any)?.invite_code ?? '------'}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText((profile as any)?.invite_code ?? '')
+                      alert('Code copied!')
+                    }}
+                    className="bg-gray-700 hover:bg-gray-600 text-white font-bold text-sm px-4 py-3 rounded-xl transition-colors"
+                  >
+                    Copy
+                  </button>
+                </div>
+              </div>
+
+              {/* Instructions */}
+              <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
+                <p className="text-sm text-blue-300">
+                  <span className="font-bold">How it works:</span> When your athlete signs up using your link or code, they automatically appear in your Athletes list above.
+                </p>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }
