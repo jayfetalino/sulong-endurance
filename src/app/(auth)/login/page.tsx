@@ -50,7 +50,7 @@ export default function LoginPage() {
 
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-          <img src="/logo.png" alt="Sulong" style={{ height: '90px', width: 'auto' }} />
+         <img src="/logo.png" alt="Sulong" style={{ height: '160px', width: 'auto' }} />
           <div style={{
             fontFamily: 'DM Sans, sans-serif',
             fontSize: '0.6rem',
