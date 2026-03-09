@@ -1,26 +1,190 @@
-@import "tailwindcss";
+/* ─────────────────────────────────────────────────────────
+   SULONG ENDURANCE TRAINING SYSTEM
+   Global Styles — Dark Obsidian Luxury Theme
+   ───────────────────────────────────────────────────────── */
 
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garant:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── CSS VARIABLES ── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --obsidian:     #0A0A0F;
+  --obsidian-2:   #111118;
+  --obsidian-3:   #1A1A24;
+  --obsidian-4:   #22222E;
+  --gold:         #C9A84C;
+  --gold-light:   #E8C97A;
+  --gold-dim:     #8A6E2F;
+  --platinum:     #E8E8F0;
+  --silver:       #9898A8;
+  --silver-dim:   #5A5A6A;
+  --swim:         #4A9EDB;
+  --bike:         #E8A84C;
+  --run:          #DB4A6A;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* ── BASE RESET ── */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--obsidian);
+  color: var(--platinum);
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 400;
+  /* Subtle grain texture overlay for luxury feel */
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
 }
+
+/* ── TYPOGRAPHY ── */
+.font-display {
+  font-family: 'Cormorant Garant', serif;
+}
+
+h1, h2, h3 {
+  font-family: 'Cormorant Garant', serif;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+/* ── GOLD HAIRLINE ── */
+.hairline-gold {
+  border-color: var(--gold-dim);
+  opacity: 0.4;
+}
+
+/* ── LUXURY CARD ── */
+.card-luxury {
+  background: linear-gradient(135deg, var(--obsidian-3) 0%, var(--obsidian-2) 100%);
+  border: 1px solid rgba(201, 168, 76, 0.15);
+  border-radius: 16px;
+  transition: border-color 0.3s ease, transform 0.2s ease;
+}
+
+.card-luxury:hover {
+  border-color: rgba(201, 168, 76, 0.35);
+  transform: translateY(-1px);
+}
+
+/* ── GOLD BUTTON ── */
+.btn-gold {
+  background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 50%, var(--gold) 100%);
+  background-size: 200% 100%;
+  color: #0A0A0F;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  transition: background-position 0.4s ease, transform 0.2s ease;
+}
+
+.btn-gold:hover {
+  background-position: 100% 0;
+  transform: translateY(-1px);
+}
+
+/* ── GHOST BUTTON ── */
+.btn-ghost {
+  background: transparent;
+  border: 1px solid rgba(201, 168, 76, 0.3);
+  color: var(--gold);
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  transition: all 0.3s ease;
+}
+
+.btn-ghost:hover {
+  background: rgba(201, 168, 76, 0.1);
+  border-color: var(--gold);
+}
+
+/* ── GOLD ACCENT LINE ── */
+.accent-line {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold-dim), transparent);
+  opacity: 0.5;
+}
+
+/* ── SPORT COLORS ── */
+.sport-swim  { color: var(--swim); }
+.sport-bike  { color: var(--bike); }
+.sport-run   { color: var(--run); }
+
+.sport-swim-bg  { background-color: var(--swim); }
+.sport-bike-bg  { background-color: var(--bike); }
+.sport-run-bg   { background-color: var(--run); }
+
+/* ── GLASS CARD ── */
+.card-glass {
+  background: rgba(26, 26, 36, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(201, 168, 76, 0.12);
+  border-radius: 16px;
+}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--obsidian); }
+::-webkit-scrollbar-thumb {
+  background: var(--gold-dim);
+  border-radius: 2px;
+}
+
+/* ── INPUT ── */
+.input-luxury {
+  background: var(--obsidian-3);
+  border: 1px solid rgba(201, 168, 76, 0.2);
+  color: var(--platinum);
+  font-family: 'DM Sans', sans-serif;
+  border-radius: 10px;
+  padding: 14px 16px;
+  width: 100%;
+  transition: border-color 0.3s ease;
+  outline: none;
+}
+
+.input-luxury:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.08);
+}
+
+.input-luxury::placeholder {
+  color: var(--silver-dim);
+}
+
+/* ── GOLD TEXT ── */
+.text-gold { color: var(--gold); }
+.text-gold-light { color: var(--gold-light); }
+.text-silver { color: var(--silver); }
+.text-platinum { color: var(--platinum); }
+
+/* ── PAGE FADE IN ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.fade-up {
+  animation: fadeUp 0.6s ease forwards;
+}
+
+.fade-up-delay-1 { animation-delay: 0.1s; opacity: 0; animation-fill-mode: forwards; animation-name: fadeUp; animation-duration: 0.6s; }
+.fade-up-delay-2 { animation-delay: 0.2s; opacity: 0; animation-fill-mode: forwards; animation-name: fadeUp; animation-duration: 0.6s; }
+.fade-up-delay-3 { animation-delay: 0.3s; opacity: 0; animation-fill-mode: forwards; animation-name: fadeUp; animation-duration: 0.6s; }
+.fade-up-delay-4 { animation-delay: 0.4s; opacity: 0; animation-fill-mode: forwards; animation-name: fadeUp; animation-duration: 0.6s; }
