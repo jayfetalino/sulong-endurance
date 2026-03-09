@@ -1,0 +1,101 @@
+// src/components/workouts/WorkoutBuilder.tsx
+// ─────────────────────────────────────────────────────────
+// The main workout builder — this is where coaches create
+// workouts by adding interval blocks one by one.
+//
+// Think of it like building with LEGO:
+// - You pick the sport (swim/bike/run)
+// - You add blocks (warmup, work, rest, cooldown)
+// - Each block has duration/distance + HR zone
+// - You give the workout a name and save it
+// ─────────────────────────────────────────────────────────
+'use client'
+
+import { useState } from 'react'
+import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
+import IntervalBlock, { IntervalData } from './IntervalBlock'
+import { formatDuration, formatYards, estimateTSS, SPORT_CONFIG } from '@/lib/workout-utils'
+import type { Sport } from '@/types'
+
+// ── HELPER: create a blank new interval ───────────────────
+// Every time coach clicks "+ Add Interval", we add one of these
+function createBlankInterval(): IntervalData {
+  return {
+    id: crypto.randomUUID(),
+    // crypto.randomUUID() generates a unique ID like "a3f9bc12-..."
+    // Built into modern browsers — no library needed
+    type: 'work',
+    measureBy: 'time',
+    hours: 0,
+    minutes: 10,
+    seconds: 0,
+    distance: 100,
+    distanceUnit: 'yards',
+    hrZone: 2,
+    notes: '',
+  }
+}
+
+// ── PROPS ─────────────────────────────────────────────────
+interface WorkoutBuilderProps {
+  onSaved?: () => void
+  // onSaved = optional function called after workout is saved
+  // The "?" means the parent component doesn't HAVE to pass it
+}
+
+export default function WorkoutBuilder({ onSaved }: WorkoutBuilderProps) {
+
+  // ── STATE ────────────────────────────────────────────────
+  const [sport, setSport] = useState<Sport>('bike')
+  const [name, setName] = useState('')
+  const [description, setDescription] = useState('')
+  const [intervals, setIntervals] = useState<IntervalData[]>([
+    createBlankInterval()
+    // Start with one blank interval already added
+  ])
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const supabase = createSupabaseBrowserClient()
+
+  // ── CALCULATED VALUES ─────────────────────────────────────
+  // These recalculate automatically whenever intervals change
+
+  // Total duration in seconds across all time-based intervals
+  const totalSeconds = intervals.reduce((sum, interval) => {
+    // "reduce" loops through array and accumulates a value
+    // "sum" starts at 0 and we add to it each loop
+    if (interval.measureBy === 'time') {
+      return sum + (interval.hours * 3600) + (interval.minutes * 60) + interval.seconds
+    }
+    return sum
+    // Distance intervals don't add to time total
+  }, 0)
+  // The "0" is the starting value of "sum"
+
+  // Estimated TSS based on the hardest zone used
+  const hardestZone = Math.max(...intervals.map(i => i.hrZone))
+  // Math.max(...array) finds the highest number in an array
+  // "..." is the spread operator — expands the array into individual arguments
+  const estimatedTSS = estimateTSS(totalSeconds, hardestZone)
+
+  // ── UPDATE AN INTERVAL ────────────────────────────────────
+  // Called when coach changes any field in any interval block
+  function handleIntervalChange(id: string, field: string, value: string | number) {
+    setIntervals(prev =>
+      // "prev" = the current intervals array
+      prev.map(interval =>
+        // ".map()" creates a NEW array — we never modify the original
+        interval.id === id
+          ? { ...interval, [field]: value }
+          // "{ ...interval }" = copy all existing fields
+          // "[field]: value" = override just the changed field
+          // "[field]" uses the variable as the key name (computed property)
+          : interval
+          // If this isn't the interval that changed, return it unchanged
+      )
+    )
+  }
+
+  // ── DELET
