@@ -1,45 +1,41 @@
 // src/app/(auth)/signup/page.tsx
-// ─────────────────────────────────────────────────────────
-// Updated signup — athletes enter a coach invite code
-// to get automatically linked to their coach.
-// ─────────────────────────────────────────────────────────
 'use client'
-import { useSearchParams } from 'next/navigation'
-import { useState } from 'react'
+
+import { useState, Suspense } from 'react'
 import { useRouter } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
 import Link from 'next/link'
 
-export default function SignupPage() {
+// ── We split into two components because useSearchParams()
+// requires a Suspense wrapper in Next.js production builds.
+// Inner = the actual form, Outer = the wrapper ──────────────
+
+function SignupForm() {
+  const searchParams = useSearchParams()
   const [fullName, setFullName]     = useState('')
   const [email, setEmail]           = useState('')
   const [password, setPassword]     = useState('')
   const [role, setRole]             = useState<'coach' | 'athlete'>('athlete')
-   const searchParams = useSearchParams()
   const [inviteCode, setInviteCode] = useState(
     searchParams.get('code')?.toUpperCase() ?? ''
   )
-
-  // inviteCode only matters when role === 'athlete'
-
   const [error, setError]     = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
-  const router  = useRouter()
+  const router   = useRouter()
   const supabase = createSupabaseBrowserClient()
 
   async function handleSignup() {
     setLoading(true)
     setError(null)
 
-    // ── VALIDATE ───────────────────────────────────────
     if (!fullName.trim()) {
       setError('Please enter your full name.')
       setLoading(false)
       return
     }
 
-    // If athlete, validate invite code before creating account
     let coachId: string | null = null
     if (role === 'athlete') {
       if (!inviteCode.trim()) {
@@ -48,12 +44,10 @@ export default function SignupPage() {
         return
       }
 
-      // Look up the coach by invite code
       const { data: coachData, error: coachError } = await supabase
         .from('profiles')
         .select('id, full_name')
         .eq('invite_code', inviteCode.trim().toUpperCase())
-        // .toUpperCase() so "abc123" and "ABC123" both work
         .eq('role', 'coach')
         .single()
 
@@ -64,10 +58,8 @@ export default function SignupPage() {
       }
 
       coachId = coachData.id
-      // We found the coach — save their ID to link later
     }
 
-    // ── CREATE AUTH ACCOUNT ────────────────────────────
     const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
@@ -79,15 +71,13 @@ export default function SignupPage() {
       return
     }
 
-    // ── CREATE PROFILE ROW ─────────────────────────────
     if (data.user) {
       const { error: profileError } = await supabase
         .rpc('create_profile', {
-          user_id: data.user.id,
-          user_name: fullName.trim(),
-          user_role: role,
+          user_id:      data.user.id,
+          user_name:    fullName.trim(),
+          user_role:    role,
           user_coach_id: coachId,
-          // If athlete: links to coach. If coach: stays null.
         })
 
       if (profileError) {
@@ -97,7 +87,6 @@ export default function SignupPage() {
       }
     }
 
-    // ── REDIRECT ───────────────────────────────────────
     router.push(role === 'coach' ? '/coach' : '/athlete')
   }
 
@@ -118,7 +107,6 @@ export default function SignupPage() {
             </div>
           )}
 
-          {/* Full name */}
           <div className="mb-4">
             <label className="block text-sm text-gray-300 mb-1.5">Full Name</label>
             <input
@@ -130,7 +118,6 @@ export default function SignupPage() {
             />
           </div>
 
-          {/* Email */}
           <div className="mb-4">
             <label className="block text-sm text-gray-300 mb-1.5">Email</label>
             <input
@@ -142,7 +129,6 @@ export default function SignupPage() {
             />
           </div>
 
-          {/* Password */}
           <div className="mb-4">
             <label className="block text-sm text-gray-300 mb-1.5">Password</label>
             <input
@@ -154,7 +140,6 @@ export default function SignupPage() {
             />
           </div>
 
-          {/* Role selector */}
           <div className="mb-4">
             <label className="block text-sm text-gray-300 mb-1.5">I am a...</label>
             <div className="grid grid-cols-2 gap-3">
@@ -181,7 +166,6 @@ export default function SignupPage() {
             </div>
           </div>
 
-          {/* Invite code — only shown for athletes */}
           {role === 'athlete' && (
             <div className="mb-4">
               <label className="block text-sm text-gray-300 mb-1.5">
@@ -191,12 +175,9 @@ export default function SignupPage() {
                 type="text"
                 value={inviteCode}
                 onChange={e => setInviteCode(e.target.value.toUpperCase())}
-                // .toUpperCase() as they type so it always shows uppercase
                 placeholder="e.g. ABC123"
                 maxLength={6}
                 className="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-4 py-3 focus:outline-none focus:border-cyan-500 transition-colors font-mono tracking-widest text-center text-lg uppercase"
-                // font-mono = monospace font looks great for codes
-                // tracking-widest = spaced out letters
               />
               <p className="text-xs text-gray-500 mt-1.5">
                 Get this code from your coach.
@@ -204,7 +185,6 @@ export default function SignupPage() {
             </div>
           )}
 
-          {/* Submit */}
           <button
             onClick={handleSignup}
             disabled={loading}
@@ -225,3 +205,15 @@ export default function SignupPage() {
   )
 }
 
+// Outer wrapper with Suspense — required for useSearchParams in production
+export default function SignupPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        <div className="text-gray-400">Loading...</div>
+      </div>
+    }>
+      <SignupForm />
+    </Suspense>
+  )
+}
