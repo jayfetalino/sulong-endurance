@@ -26,6 +26,8 @@ import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
 // Link = like an <a> tag but faster — doesn't reload the whole page
 import Link from 'next/link'
 
+export const dynamic = 'force-dynamic'
+
 export default function LoginPage() {
   // ── STATE ────────────────────────────────────────────────
   // Think of "state" like sticky notes the component remembers.

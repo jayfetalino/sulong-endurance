@@ -6,6 +6,9 @@ import { useRouter } from 'next/navigation'
 import { useSearchParams } from 'next/navigation'
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
 import Link from 'next/link'
+// Tell Next.js to always render this page dynamically (in browser)
+// Never pre-render on server — we use browser APIs like useSearchParams
+export const dynamic = 'force-dynamic'
 
 // ── We split into two components because useSearchParams()
 // requires a Suspense wrapper in Next.js production builds.
