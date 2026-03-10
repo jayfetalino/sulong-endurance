@@ -49,22 +49,22 @@ export default function LoginPage() {
       <div style={{ width: '100%', maxWidth: '420px' }} className="fade-up">
 
     {/* Logo */}
-        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-       <img src="/logo.png" alt="Sulong" style={{ width: '320px', height: 'auto', marginBottom: '4px' }} />
+     <div style={{ textAlign: 'center', marginBottom: '16px' }}>
+          <img src="/logo.png" alt="Sulong" style={{ width: '360px', height: 'auto', marginBottom: '0px' }} />
           <div style={{
             fontFamily: 'DM Sans, sans-serif',
             fontSize: '0.6rem',
             letterSpacing: '0.28em',
             textTransform: 'uppercase',
             color: 'var(--silver-dim)',
-            marginTop: '2px',
+            marginTop: '0px',
           }}>
             Endurance Training System
           </div>
           <div style={{
             height: '1px',
             background: 'linear-gradient(90deg, transparent, rgba(201,168,76,0.35), transparent)',
-            marginTop: '14px',
+            marginTop: '10px',
           }} />
         </div>
          
