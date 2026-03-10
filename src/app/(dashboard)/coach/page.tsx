@@ -3,334 +3,310 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
-import type { Profile } from '@/types'
 
-function StatCard({ label, value, icon }: { label: string; value: string; icon: string }) {
-  return (
-    <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-      <div className="text-2xl mb-3">{icon}</div>
-      <div className="text-3xl font-bold text-white mb-1">{value}</div>
-      <div className="text-sm text-gray-400">{label}</div>
-    </div>
-  )
+interface Profile {
+  id: string
+  full_name: string
+  role: string
+  ftp?: number
+  invite_code?: string
 }
 
 export default function CoachDashboard() {
-  const [profile, setProfile] = useState<Profile | null>(null)
+  const [profile, setProfile]   = useState<Profile | null>(null)
   const [athletes, setAthletes] = useState<Profile[]>([])
-  const [loading, setLoading] = useState(true)
+  const [stats, setStats]       = useState({ totalAthletes: 0, workoutsThisWeek: 0, completedToday: 0, upcomingRaces: 0 })
   const [showInviteModal, setShowInviteModal] = useState(false)
-  const router = useRouter()
+  const router   = useRouter()
   const supabase = createSupabaseBrowserClient()
 
   useEffect(() => {
-    async function loadData() {
-      // Check if someone is logged in
+    async function load() {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        router.push('/login')
-        return
-      }
-
-      // Fetch this coach's profile
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single()
-
-      if (profileData) setProfile(profileData)
-
-      // Fetch all athletes belonging to this coach
-      const { data: athletesData } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('coach_id', user.id)
-        .order('full_name', { ascending: true })
-
-      if (athletesData) setAthletes(athletesData)
-
-      setLoading(false)
+      if (!user) { router.push('/login'); return }
+      const { data: prof } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+      if (!prof || prof.role !== 'coach') { router.push('/athlete'); return }
+      setProfile(prof)
+      const { data: aths } = await supabase.from('profiles').select('*').eq('coach_id', user.id).eq('role', 'athlete')
+      setAthletes(aths ?? [])
+      setStats(s => ({ ...s, totalAthletes: aths?.length ?? 0 }))
     }
-
-    loadData()
+    load()
   }, [])
 
-  async function handleLogout() {
-    await supabase.auth.signOut()
-    router.push('/login')
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <div className="text-gray-400 text-lg">Loading...</div>
-      </div>
-    )
-  }
+  const hour = new Date().getHours()
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div style={{ fontFamily: 'DM Sans, sans-serif' }}>
 
-      {/* TOP NAV */}
-      <nav className="border-b border-gray-800 bg-gray-900 px-6 py-4">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="text-xl font-bold text-cyan-400">Sulong Endurance Training System</span>
-            <span className="text-gray-600">|</span>
-            <span className="text-gray-400 text-sm">Coach Dashboard</span>
+      {/* ── PAGE HEADER ── */}
+      <div className="fade-up" style={{ marginBottom: '40px' }}>
+        <p style={{ fontSize: '0.7rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--silver-dim)', marginBottom: '6px' }}>
+          Coach Dashboard
+        </p>
+        <h1 style={{ fontFamily: 'Cormorant Garant, serif', fontSize: '2.8rem', fontWeight: 600, color: 'var(--platinum)', lineHeight: 1.1 }}>
+          {greeting}, {profile?.full_name?.split(' ')[0]} 👋
+        </h1>
+        <p style={{ color: 'var(--silver)', marginTop: '6px', fontSize: '0.95rem' }}>
+          {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+        </p>
+      </div>
+
+      {/* ── STAT CARDS ── */}
+      <div className="fade-up-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '32px' }}>
+        {[
+          { label: 'Total Athletes',      value: stats.totalAthletes,    icon: '🏊' },
+          { label: 'Workouts This Week',  value: stats.workoutsThisWeek, icon: '📋' },
+          { label: 'Completed Today',     value: stats.completedToday,   icon: '✅' },
+          { label: 'Upcoming Races',      value: stats.upcomingRaces,    icon: '🏁' },
+        ].map(stat => (
+          <div key={stat.label} className="card-luxury" style={{ padding: '24px' }}>
+            <div style={{ fontSize: '1.5rem', marginBottom: '12px' }}>{stat.icon}</div>
+            <div style={{ fontFamily: 'Cormorant Garant, serif', fontSize: '2.8rem', fontWeight: 600, color: 'var(--gold)', lineHeight: 1 }}>
+              {stat.value}
+            </div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--silver)', marginTop: '6px', letterSpacing: '0.05em' }}>
+              {stat.label}
+            </div>
           </div>
-          <div className="flex items-center gap-4">
-            <span className="text-gray-300 text-sm">👋 {profile?.full_name}</span>
+        ))}
+      </div>
+
+      {/* ── MAIN GRID ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '24px' }}>
+
+        {/* Athletes */}
+        <div className="fade-up-2 card-luxury" style={{ padding: '28px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+            <div>
+              <h2 style={{ fontFamily: 'Cormorant Garant, serif', fontSize: '1.6rem', fontWeight: 600, color: 'var(--platinum)' }}>
+                Your Athletes
+              </h2>
+              <div style={{ height: '1px', background: 'linear-gradient(90deg, var(--gold-dim), transparent)', marginTop: '6px', width: '60px', opacity: 0.6 }} />
+            </div>
             <button
-              onClick={handleLogout}
-              className="text-gray-400 hover:text-white text-sm transition-colors"
+              onClick={() => setShowInviteModal(true)}
+              className="btn-gold"
+              style={{ padding: '10px 20px', borderRadius: '8px', border: 'none' }}
             >
-              Sign out
+              + Add Athlete
             </button>
           </div>
-        </div>
-      </nav>
 
-      {/* MAIN CONTENT */}
-      <main className="max-w-6xl mx-auto px-6 py-10">
-
-        {/* WELCOME */}
-        <div className="mb-10">
-          <h1 className="text-4xl font-bold mb-2">
-            Good morning, {profile?.full_name?.split(' ')[0]} 👋
-          </h1>
-          <p className="text-gray-400">
-            Here's what's happening with your athletes today.
-          </p>
-        </div>
-
-        {/* STAT CARDS */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-          <StatCard icon="🏊" value={athletes.length.toString()} label="Total Athletes" />
-          <StatCard icon="📋" value="0" label="Workouts This Week" />
-          <StatCard icon="✅" value="0" label="Completed Today" />
-          <StatCard icon="📅" value="0" label="Upcoming Races" />
-        </div>
-
-        {/* TWO COLUMN LAYOUT */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-          {/* ATHLETE LIST */}
-          <div className="lg:col-span-2">
-            <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold">Your Athletes</h2>
-                <button
-                  onClick={() => setShowInviteModal(true)}
-                  className="bg-cyan-500 hover:bg-cyan-400 text-gray-950 font-bold text-sm px-4 py-2 rounded-lg transition-colors">
-                  + Add Athlete
-                </button>
-              </div>
-
-              {athletes.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="text-5xl mb-4">🏊</div>
-                  <p className="text-gray-400 mb-2">No athletes yet</p>
-                  <p className="text-gray-600 text-sm">
-                    Athletes will appear here once they sign up and are assigned to you.
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {athletes.map((athlete) => (
-                    <div
-                      key={athlete.id}
-                      className="flex items-center justify-between p-4 bg-gray-800 rounded-xl"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-cyan-500 rounded-full flex items-center justify-center text-gray-950 font-bold">
-                          {athlete.full_name.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <div className="font-medium">{athlete.full_name}</div>
-                          <div className="text-sm text-gray-400">
-                            FTP: {athlete.ftp ? `${athlete.ftp}w` : 'Not set'}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => router.push(`/calendar?athlete=${athlete.id}`)}
-                          className="text-xs bg-gray-700 hover:bg-gray-600 px-3 py-1.5 rounded-lg transition-colors">
-                          View Plan
-                        </button>
-                        <button
-                          onClick={() => router.push(`/workouts/new?athlete=${athlete.id}`)}
-                          className="text-xs bg-gray-700 hover:bg-gray-600 px-3 py-1.5 rounded-lg transition-colors">
-                          Add Workout
-                        </button>
+          {athletes.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--silver-dim)' }}>
+              <div style={{ fontSize: '2rem', marginBottom: '12px' }}>🏊</div>
+              <p style={{ fontFamily: 'Cormorant Garant, serif', fontSize: '1.2rem' }}>No athletes yet</p>
+              <p style={{ fontSize: '0.8rem', marginTop: '4px' }}>Share your invite code to get started</p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {athletes.map(athlete => (
+                <div key={athlete.id} style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  padding: '16px 20px',
+                  background: 'rgba(255,255,255,0.02)',
+                  border: '1px solid rgba(201,168,76,0.08)',
+                  borderRadius: '12px',
+                  transition: 'border-color 0.2s',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                    <div style={{
+                      width: '42px', height: '42px', borderRadius: '50%',
+                      background: 'linear-gradient(135deg, var(--gold-dim), var(--gold))',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontWeight: 700, fontSize: '1rem', color: '#0A0A0F',
+                    }}>
+                      {athlete.full_name.charAt(0)}
+                    </div>
+                    <div>
+                      <div style={{ fontWeight: 600, color: 'var(--platinum)', fontSize: '0.95rem' }}>{athlete.full_name}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--silver-dim)', marginTop: '2px' }}>
+                        FTP: {athlete.ftp ? `${athlete.ftp}w` : 'Not set'}
                       </div>
                     </div>
-                  ))}
+                  </div>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button
+                      onClick={() => router.push(`/calendar?athlete=${athlete.id}`)}
+                      className="btn-ghost"
+                      style={{ padding: '7px 14px', borderRadius: '8px' }}
+                    >
+                      View Plan
+                    </button>
+                    <button
+                      onClick={() => router.push(`/workouts/new?athlete=${athlete.id}`)}
+                      className="btn-gold"
+                      style={{ padding: '7px 14px', borderRadius: '8px', border: 'none' }}
+                    >
+                      Add Workout
+                    </button>
+                  </div>
                 </div>
-              )}
+              ))}
             </div>
+          )}
+        </div>
+
+        {/* Sidebar */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+          {/* Quick Actions */}
+          <div className="fade-up-3 card-luxury" style={{ padding: '24px' }}>
+            <h3 style={{ fontFamily: 'Cormorant Garant, serif', fontSize: '1.2rem', color: 'var(--platinum)', marginBottom: '16px' }}>
+              Quick Actions
+            </h3>
+            {[
+              { icon: '✏️', label: 'Build a Workout',  sub: 'Create swim, bike or run', href: '/workouts/new' },
+              { icon: '📅', label: 'Open Calendar',    sub: 'Plan training week',       href: '/calendar'     },
+            ].map(action => (
+              <button
+                key={action.label}
+                onClick={() => router.push(action.href)}
+                style={{
+                  width: '100%', display: 'flex', alignItems: 'center', gap: '12px',
+                  padding: '12px', borderRadius: '10px', border: 'none',
+                  background: 'rgba(255,255,255,0.02)', cursor: 'pointer',
+                  transition: 'background 0.2s', marginBottom: '8px',
+                  textAlign: 'left',
+                }}
+              >
+                <span style={{ fontSize: '1.2rem' }}>{action.icon}</span>
+                <div>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--platinum)' }}>{action.label}</div>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--silver-dim)' }}>{action.sub}</div>
+                </div>
+              </button>
+            ))}
           </div>
 
-          {/* QUICK ACTIONS */}
-          <div className="space-y-4">
-            <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
-              <h2 className="text-xl font-bold mb-4">Quick Actions</h2>
-              <div className="space-y-3">
-                <button
-                  onClick={() => router.push('/workouts')}
-                  className="w-full text-left flex items-center gap-3 p-3 bg-gray-800 hover:bg-gray-700 rounded-xl transition-colors"
-                >
-                  <span className="text-xl">✍️</span>
-                  <div>
-                    <div className="font-medium text-sm">Build a Workout</div>
-                    <div className="text-xs text-gray-400">Create swim, bike or run</div>
-                  </div>
-                </button>
-                <button
-                  onClick={() => router.push('/calendar')}
-                  className="w-full text-left flex items-center gap-3 p-3 bg-gray-800 hover:bg-gray-700 rounded-xl transition-colors"
-                >
-                  <span className="text-xl">📅</span>
-                  <div>
-                    <div className="font-medium text-sm">Open Calendar</div>
-                    <div className="text-xs text-gray-400">Plan training week</div>
-                  </div>
-                </button>
-                <button className="w-full text-left flex items-center gap-3 p-3 bg-gray-800 hover:bg-gray-700 rounded-xl transition-colors">
-                  <span className="text-xl">📊</span>
-                  <div>
-                    <div className="font-medium text-sm">View Analytics</div>
-                    <div className="text-xs text-gray-400">Athlete performance</div>
-                  </div>
-                </button>
+          {/* Invite Code */}
+          <div className="fade-up-4 card-luxury" style={{ padding: '24px' }}>
+            <h3 style={{ fontFamily: 'Cormorant Garant, serif', fontSize: '1.2rem', color: 'var(--platinum)', marginBottom: '4px' }}>
+              Your Invite Code
+            </h3>
+            <p style={{ fontSize: '0.72rem', color: 'var(--silver-dim)', marginBottom: '16px' }}>
+              Share with athletes to join your roster
+            </p>
+            <div style={{
+              background: 'rgba(201,168,76,0.06)',
+              border: '1px solid rgba(201,168,76,0.2)',
+              borderRadius: '12px', padding: '16px',
+              textAlign: 'center',
+            }}>
+              <div style={{
+                fontFamily: 'DM Mono, monospace',
+                fontSize: '2.2rem', fontWeight: 500,
+                color: 'var(--gold)', letterSpacing: '0.2em',
+              }}>
+                {profile?.invite_code ?? '------'}
               </div>
             </div>
+            <button
+              onClick={() => setShowInviteModal(true)}
+              className="btn-ghost"
+              style={{ width: '100%', padding: '10px', borderRadius: '8px', marginTop: '12px' }}
+            >
+              Share Invite Link
+            </button>
+          </div>
 
-            {/* YOUR INVITE CODE CARD — paste this above Sport Zones */}
-            <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
-              <h2 className="text-sm font-bold text-gray-400 mb-1 uppercase tracking-wider">
-                Your Invite Code
-              </h2>
-              <p className="text-xs text-gray-600 mb-3">
-                Share this with athletes so they can join your roster.
-              </p>
-              <div className="bg-gray-800 rounded-xl px-4 py-3 text-center">
-                <span className="text-3xl font-mono font-bold tracking-widest text-cyan-400">
-                  {(profile as any)?.invite_code ?? '------'}
-                </span>
+          {/* Sport Zones */}
+          <div className="card-luxury" style={{ padding: '24px' }}>
+            <h3 style={{ fontFamily: 'Cormorant Garant, serif', fontSize: '1.2rem', color: 'var(--platinum)', marginBottom: '16px' }}>
+              Sport Zones
+            </h3>
+            {[
+              { sport: 'Swim', color: '#4A9EDB' },
+              { sport: 'Bike', color: '#E8A84C' },
+              { sport: 'Run',  color: '#DB4A6A' },
+            ].map(s => (
+              <div key={s.sport} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: s.color }} />
+                <span style={{ fontSize: '0.85rem', color: 'var(--silver)' }}>{s.sport}</span>
               </div>
-              <p className="text-xs text-gray-600 mt-2 text-center">
-                Athletes enter this at signup
-              </p>
-            </div>
-
-            <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
-              <h2 className="text-sm font-bold text-gray-400 mb-3 uppercase tracking-wider">Sport Zones</h2>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm">
-                  <div className="w-3 h-3 rounded-full bg-cyan-400"></div>
-                  <span className="text-gray-300">Swim</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <div className="w-3 h-3 rounded-full bg-orange-400"></div>
-                  <span className="text-gray-300">Bike</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <div className="w-3 h-3 rounded-full bg-green-400"></div>
-                  <span className="text-gray-300">Run</span>
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
 
         </div>
-      </main>
-    {/* ── INVITE MODAL ── */}
+      </div>
+
+      {/* ── INVITE MODAL ── */}
       {showInviteModal && (
         <div
-          className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
           onClick={() => setShowInviteModal(false)}
+          style={{
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 100, padding: '24px',
+          }}
         >
           <div
-            className="bg-gray-900 border border-gray-700 rounded-2xl p-8 w-full max-w-md"
             onClick={e => e.stopPropagation()}
+            className="card-luxury"
+            style={{ width: '100%', maxWidth: '480px', padding: '36px' }}
           >
-            {/* Header */}
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold">Add an Athlete</h2>
-              <button
-                onClick={() => setShowInviteModal(false)}
-                className="text-gray-500 hover:text-white text-xl"
-              >✕</button>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
+              <h2 style={{ fontFamily: 'Cormorant Garant, serif', fontSize: '1.8rem', fontWeight: 600 }}>Add an Athlete</h2>
+              <button onClick={() => setShowInviteModal(false)} style={{ background: 'none', border: 'none', color: 'var(--silver)', fontSize: '1.5rem', cursor: 'pointer' }}>✕</button>
             </div>
 
-            {/* Two ways to invite */}
-            <div className="space-y-5">
+            {/* Share link */}
+            <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(201,168,76,0.12)', borderRadius: '12px', padding: '20px', marginBottom: '16px' }}>
+              <h3 style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--platinum)', marginBottom: '4px' }}>🔗 Share Signup Link</h3>
+              <p style={{ fontSize: '0.78rem', color: 'var(--silver-dim)', marginBottom: '12px' }}>Send this — invite code is pre-filled automatically</p>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input
+                  readOnly
+                  value={`${typeof window !== 'undefined' ? window.location.origin : ''}/signup?code=${profile?.invite_code}`}
+                  style={{
+                    flex: 1, background: 'var(--obsidian)', border: '1px solid rgba(201,168,76,0.2)',
+                    color: 'var(--gold)', borderRadius: '8px', padding: '10px 12px',
+                    fontSize: '0.72rem', fontFamily: 'DM Mono, monospace', outline: 'none',
+                  }}
+                />
+                <button
+                  onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/signup?code=${profile?.invite_code}`); alert('Copied!') }}
+                  className="btn-gold"
+                  style={{ padding: '10px 16px', borderRadius: '8px', border: 'none', whiteSpace: 'nowrap' }}
+                >
+                  Copy
+                </button>
+              </div>
+            </div>
 
-              {/* Option 1: Share the link */}
-              <div className="bg-gray-800 border border-gray-700 rounded-xl p-5">
-                <h3 className="font-bold mb-1">🔗 Share Signup Link</h3>
-                <p className="text-sm text-gray-400 mb-3">
-                  Send this link to your athlete. It pre-fills your invite code automatically.
-                </p>
-                <div className="flex gap-2">
-                  <input
-                    readOnly
-                    value={`${typeof window !== 'undefined' ? window.location.origin : ''}/signup?code=${(profile as any)?.invite_code}`}
-                    className="flex-1 bg-gray-900 border border-gray-600 text-cyan-400 text-xs rounded-lg px-3 py-2.5 font-mono"
-                  />
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(
-                        `${window.location.origin}/signup?code=${(profile as any)?.invite_code}`
-                      )
-                      alert('Link copied!')
-                    }}
-                    className="bg-cyan-500 hover:bg-cyan-400 text-gray-950 font-bold text-sm px-4 rounded-lg transition-colors"
-                  >
-                    Copy
-                  </button>
+            {/* Code only */}
+            <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(201,168,76,0.12)', borderRadius: '12px', padding: '20px', marginBottom: '16px' }}>
+              <h3 style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--platinum)', marginBottom: '4px' }}>🔑 Invite Code Only</h3>
+              <p style={{ fontSize: '0.78rem', color: 'var(--silver-dim)', marginBottom: '12px' }}>Athlete enters this manually at signup</p>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <div style={{
+                  flex: 1, background: 'var(--obsidian)', border: '1px solid rgba(201,168,76,0.2)',
+                  borderRadius: '8px', padding: '12px', textAlign: 'center',
+                  fontFamily: 'DM Mono, monospace', fontSize: '1.8rem',
+                  color: 'var(--gold)', letterSpacing: '0.2em',
+                }}>
+                  {profile?.invite_code}
                 </div>
+                <button
+                  onClick={() => { navigator.clipboard.writeText(profile?.invite_code ?? ''); alert('Copied!') }}
+                  className="btn-ghost"
+                  style={{ padding: '12px 16px', borderRadius: '8px' }}
+                >
+                  Copy
+                </button>
               </div>
+            </div>
 
-              {/* Option 2: Share the code */}
-              <div className="bg-gray-800 border border-gray-700 rounded-xl p-5">
-                <h3 className="font-bold mb-1">🔑 Share Invite Code</h3>
-                <p className="text-sm text-gray-400 mb-3">
-                  Athletes enter this code manually at signup.
-                </p>
-                <div className="flex gap-2 items-center">
-                  <div className="flex-1 bg-gray-900 border border-gray-600 rounded-xl px-4 py-3 text-center">
-                    <span className="text-3xl font-mono font-bold tracking-widest text-cyan-400">
-                      {(profile as any)?.invite_code ?? '------'}
-                    </span>
-                  </div>
-                  <button
-                    onClick={() => {
-                      navigator.clipboard.writeText((profile as any)?.invite_code ?? '')
-                      alert('Code copied!')
-                    }}
-                    className="bg-gray-700 hover:bg-gray-600 text-white font-bold text-sm px-4 py-3 rounded-xl transition-colors"
-                  >
-                    Copy
-                  </button>
-                </div>
-              </div>
-
-              {/* Instructions */}
-              <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4">
-                <p className="text-sm text-blue-300">
-                  <span className="font-bold">How it works:</span> When your athlete signs up using your link or code, they automatically appear in your Athletes list above.
-                </p>
-              </div>
-
+            <div style={{ background: 'rgba(74,158,219,0.08)', border: '1px solid rgba(74,158,219,0.2)', borderRadius: '10px', padding: '14px' }}>
+              <p style={{ fontSize: '0.8rem', color: '#7BC8F0' }}>
+                <strong>How it works:</strong> Athletes who sign up with your link or code automatically appear in your roster above.
+              </p>
             </div>
           </div>
         </div>
       )}
-
     </div>
   )
 }
