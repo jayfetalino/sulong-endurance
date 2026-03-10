@@ -1,5 +1,3 @@
-// src/app/(dashboard)/workouts/page.tsx
-// The workout LIBRARY — lists all workouts the coach has created
 'use client'
 
 import { useEffect, useState } from 'react'
@@ -7,16 +5,11 @@ import { useRouter } from 'next/navigation'
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
 import type { Workout } from '@/types'
 
-// Sport color helpers
 const SPORT_COLORS: Record<string, string> = {
-  swim: 'text-cyan-400 bg-cyan-400/10 border-cyan-400/30',
-  bike: 'text-orange-400 bg-orange-400/10 border-orange-400/30',
-  run:  'text-green-400 bg-green-400/10 border-green-400/30',
-  brick: 'text-purple-400 bg-purple-400/10 border-purple-400/30',
+  swim: '#4A9EDB', bike: '#E8A84C', run: '#DB4A6A', brick: '#A84ADB',
 }
-
 const SPORT_ICONS: Record<string, string> = {
-  swim: '🏊', bike: '🚴', run: '🏃', brick: '🧱'
+  swim: '🏊', bike: '🚴', run: '🏃', brick: '🧱',
 }
 
 function formatDuration(seconds: number): string {
@@ -27,99 +20,176 @@ function formatDuration(seconds: number): string {
   return `${h}h ${m}m`
 }
 
+function getTotalDuration(workout: Workout): number {
+  if (!workout.intervals || !Array.isArray(workout.intervals)) return 0
+  return workout.intervals.reduce((sum: number, iv: any) => sum + (iv.duration_seconds ?? 0), 0)
+}
+
 export default function WorkoutsPage() {
   const [workouts, setWorkouts] = useState<Workout[]>([])
-  const [loading, setLoading] = useState(true)
-  const router = useRouter()
+  const [loading, setLoading]   = useState(true)
+  const router   = useRouter()
   const supabase = createSupabaseBrowserClient()
 
   useEffect(() => {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
-
       const { data } = await supabase
         .from('workouts')
         .select('*')
-        .eq('created_by', user.id)
+        .eq('coach_id', user.id)
         .order('created_at', { ascending: false })
-        // Show newest workouts first
-
-      if (data) setWorkouts(data)
+      setWorkouts(data ?? [])
       setLoading(false)
     }
     load()
   }, [])
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <div className="text-gray-400">Loading workouts...</div>
-      </div>
-    )
-  }
-
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
-      {/* NAV */}
-      <nav className="border-b border-gray-800 bg-gray-900 px-6 py-4">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <button onClick={() => router.push('/coach')} className="text-gray-400 hover:text-white">
-              ← Dashboard
-            </button>
-            <span className="text-gray-600">|</span>
-            <span className="font-bold">Workout Library</span>
-          </div>
+    <div style={{ fontFamily: 'DM Sans, sans-serif' }}>
+
+      {/* ── HEADER ── */}
+      <div className="fade-up" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '36px' }}>
+        <div>
+          <p style={{ fontSize: '0.7rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--silver-dim)', marginBottom: '6px' }}>
+            Workout Library
+          </p>
+          <h1 style={{ fontFamily: 'Cormorant Garant, serif', fontSize: '2.5rem', fontWeight: 600, color: 'var(--platinum)' }}>
+            Your Workouts
+          </h1>
+        </div>
+        <button
+          onClick={() => router.push('/workouts/new')}
+          className="btn-gold"
+          style={{ padding: '12px 24px', borderRadius: '10px', border: 'none' }}
+        >
+          + New Workout
+        </button>
+      </div>
+
+      {/* ── LOADING ── */}
+      {loading && (
+        <div style={{ textAlign: 'center', padding: '80px 0' }}>
+          <p style={{ fontFamily: 'Cormorant Garant, serif', fontSize: '1.5rem', fontStyle: 'italic', color: 'var(--silver)' }}>
+            Loading workouts...
+          </p>
+        </div>
+      )}
+
+      {/* ── EMPTY STATE ── */}
+      {!loading && workouts.length === 0 && (
+        <div className="card-luxury" style={{ padding: '80px', textAlign: 'center' }}>
+          <div style={{ fontSize: '3rem', marginBottom: '16px' }}>✏️</div>
+          <h2 style={{ fontFamily: 'Cormorant Garant, serif', fontSize: '2rem', color: 'var(--platinum)', marginBottom: '8px' }}>
+            No workouts yet
+          </h2>
+          <p style={{ color: 'var(--silver)', fontSize: '0.9rem', marginBottom: '28px' }}>
+            Build your first workout to start coaching your athletes.
+          </p>
           <button
             onClick={() => router.push('/workouts/new')}
-            className="bg-cyan-500 hover:bg-cyan-400 text-gray-950 font-bold text-sm px-4 py-2 rounded-lg transition-colors"
+            className="btn-gold"
+            style={{ padding: '12px 28px', borderRadius: '10px', border: 'none' }}
           >
-            + New Workout
+            Build First Workout
           </button>
         </div>
-      </nav>
+      )}
 
-      <main className="max-w-5xl mx-auto px-6 py-8">
-        {workouts.length === 0 ? (
-          // Empty state
-          <div className="text-center py-20">
-            <div className="text-6xl mb-4">✍️</div>
-            <h2 className="text-2xl font-bold mb-2">No workouts yet</h2>
-            <p className="text-gray-400 mb-6">Create your first workout to get started.</p>
-            <button
-              onClick={() => router.push('/workouts/new')}
-              className="bg-cyan-500 hover:bg-cyan-400 text-gray-950 font-bold px-6 py-3 rounded-xl transition-colors"
-            >
-              Build Your First Workout
-            </button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {workouts.map(workout => (
+      {/* ── WORKOUT GRID ── */}
+      {!loading && workouts.length > 0 && (
+        <div className="fade-up-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
+          {workouts.map(workout => {
+            const sport = workout.sport ?? 'run'
+            const color = SPORT_COLORS[sport] ?? '#4A9EDB'
+            const duration = getTotalDuration(workout)
+            const intervalCount = Array.isArray(workout.intervals) ? workout.intervals.length : 0
+
+            return (
               <div
                 key={workout.id}
-                className="bg-gray-900 border border-gray-800 hover:border-gray-600 rounded-2xl p-5 cursor-pointer transition-colors"
+                onClick={() => router.push(`/workouts/${workout.id}`)}
+                style={{
+                  background: 'linear-gradient(135deg, var(--obsidian-3) 0%, var(--obsidian-2) 100%)',
+                  border: '1px solid rgba(201,168,76,0.1)',
+                  borderRadius: '16px',
+                  padding: '24px',
+                  cursor: 'pointer',
+                  transition: 'border-color 0.2s, transform 0.2s',
+                  borderLeft: `3px solid ${color}`,
+                  position: 'relative',
+                  overflow: 'hidden',
+                }}
+                onMouseEnter={e => {
+                  (e.currentTarget as HTMLDivElement).style.borderColor = `rgba(201,168,76,0.3)`
+                  ;(e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)'
+                }}
+                onMouseLeave={e => {
+                  (e.currentTarget as HTMLDivElement).style.borderColor = `rgba(201,168,76,0.1)`
+                  ;(e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)'
+                }}
               >
-                <div className="flex items-start justify-between mb-3">
-                  <h3 className="font-bold text-lg">{workout.name}</h3>
-                  <span className={`text-xs px-2 py-1 rounded-full border ${SPORT_COLORS[workout.sport]}`}>
-                    {SPORT_ICONS[workout.sport]} {workout.sport}
+                {/* Sport badge */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+                  <span style={{
+                    fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.1em',
+                    textTransform: 'uppercase', padding: '4px 10px', borderRadius: '20px',
+                    background: `${color}18`, color, border: `1px solid ${color}35`,
+                  }}>
+                    {SPORT_ICONS[sport]} {sport}
                   </span>
+                  <span style={{ fontSize: '1.4rem' }}>{SPORT_ICONS[sport]}</span>
                 </div>
-                {workout.description && (
-                  <p className="text-gray-400 text-sm mb-3">{workout.description}</p>
+
+                {/* Name */}
+                <h3 style={{
+                  fontFamily: 'Cormorant Garant, serif',
+                  fontSize: '1.4rem', fontWeight: 600,
+                  color: 'var(--platinum)', marginBottom: '8px',
+                  lineHeight: 1.2,
+                }}>
+                  {workout.name}
+                </h3>
+
+                {/* Stats row */}
+                <div style={{ display: 'flex', gap: '20px', marginBottom: '16px' }}>
+                  {duration > 0 && (
+                    <div>
+                      <div style={{ fontFamily: 'Cormorant Garant, serif', fontSize: '1.3rem', fontWeight: 600, color: 'var(--gold)' }}>
+                        {formatDuration(duration)}
+                      </div>
+                      <div style={{ fontSize: '0.65rem', color: 'var(--silver-dim)', letterSpacing: '0.05em' }}>duration</div>
+                    </div>
+                  )}
+                  <div>
+                    <div style={{ fontFamily: 'Cormorant Garant, serif', fontSize: '1.3rem', fontWeight: 600, color: 'var(--gold)' }}>
+                      {intervalCount}
+                    </div>
+                    <div style={{ fontSize: '0.65rem', color: 'var(--silver-dim)', letterSpacing: '0.05em' }}>intervals</div>
+                  </div>
+                </div>
+
+                {/* Interval bar */}
+                {Array.isArray(workout.intervals) && workout.intervals.length > 0 && (
+                  <div style={{ display: 'flex', gap: '2px', height: '4px', borderRadius: '2px', overflow: 'hidden' }}>
+                    {workout.intervals.map((iv: any, i: number) => (
+                      <div key={i} style={{
+                        flex: iv.duration_seconds ?? 1,
+                        background: iv.hr_zone
+                          ? ['#6B8CAE','#4A9EDB','#4ADB8A','#E8A84C','#DB4A6A'][iv.hr_zone - 1]
+                          : color,
+                        opacity: 0.8,
+                      }} />
+                    ))}
+                  </div>
                 )}
-                <div className="flex gap-4 text-sm text-gray-400">
-                  <span>⏱ {formatDuration(workout.duration_seconds)}</span>
-                  <span>📊 {(workout.intervals as unknown[])?.length ?? 0} intervals</span>
-                  {workout.tss_estimate && <span>TSS: {workout.tss_estimate}</span>}
-                </div>
               </div>
-            ))}
-          </div>
-        )}
-      </main>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
+
