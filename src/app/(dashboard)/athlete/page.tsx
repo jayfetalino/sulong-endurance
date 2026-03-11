@@ -214,7 +214,7 @@ export default function AthleteDashboard() {
         <div style={{ display: 'flex', gap: '20px', marginTop: '12px' }}>
           {[
             { icon: '✅', label: `${weekWorkouts.filter(w => w.status === 'completed').length} done` },
-            { icon: '⏳', label: `${weekWorkouts.filter(w => w.status === 'scheduled').length} remaining` },
+            { icon: '⏳', label: `${weekWorkouts.filter(w => w.status === 'pending').length} remaining` },
             { icon: '⏭️', label: `${weekWorkouts.filter(w => w.status === 'skipped').length} skipped` },
           ].map(s => (
             <div key={s.label} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', color: 'var(--silver)' }}>

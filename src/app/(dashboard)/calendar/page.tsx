@@ -123,14 +123,18 @@ export default function CalendarPage() {
   async function handleAssign() {
     if (!selectedDay || !assignForm.athleteId || !assignForm.workoutId) return
     setSaving(true)
-    await supabase.from('scheduled_workouts').insert({
+    const { error } = await supabase.from('scheduled_workouts').insert({
       athlete_id: assignForm.athleteId,
       workout_id: assignForm.workoutId,
       scheduled_date: toDateString(selectedDay.date),
-      coach_notes: assignForm.notes,
-      status: 'scheduled',
+      coach_notes: assignForm.notes || null,
+      status: 'pending',
     })
     setSaving(false)
+    if (error) {
+      alert(`Failed to assign workout: ${error.message}`)
+      return
+    }
     setShowModal(false)
     loadData()
   }
