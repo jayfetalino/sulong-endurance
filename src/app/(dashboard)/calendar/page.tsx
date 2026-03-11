@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
 import type { Workout, ScheduledWorkout, Profile } from '@/types'
@@ -46,6 +46,9 @@ export default function CalendarPage() {
   const [showModal, setShowModal]         = useState(false)
   const [assignForm, setAssignForm]       = useState({ athleteId: '', workoutId: '', notes: '' })
   const [saving, setSaving]               = useState(false)
+  const [draggingId, setDraggingId]       = useState<string | null>(null)
+  const [dragOverDate, setDragOverDate]   = useState<string | null>(null)
+  const justDropped                       = useRef(false)
 
   const router   = useRouter()
   const supabase = createSupabaseBrowserClient()
@@ -115,6 +118,7 @@ export default function CalendarPage() {
   }
 
   function openAssign(cell: DayCell) {
+    if (justDropped.current) { justDropped.current = false; return }
     setSelectedDay(cell)
     setAssignForm({ athleteId: athletes[0]?.id ?? '', workoutId: workouts[0]?.id ?? '', notes: '' })
     setShowModal(true)
@@ -139,6 +143,26 @@ export default function CalendarPage() {
     loadData()
   }
 
+  async function handleDelete(id: string, e: React.MouseEvent) {
+    e.stopPropagation()
+    const { error } = await supabase.from('scheduled_workouts').delete().eq('id', id)
+    if (error) { alert(`Failed to delete: ${error.message}`); return }
+    loadData()
+  }
+
+  async function handleDrop(dateStr: string) {
+    if (!draggingId) return
+    justDropped.current = true
+    setDragOverDate(null)
+    const { error } = await supabase
+      .from('scheduled_workouts')
+      .update({ scheduled_date: dateStr })
+      .eq('id', draggingId)
+    setDraggingId(null)
+    if (error) { alert(`Failed to move workout: ${error.message}`); return }
+    loadData()
+  }
+
   const cells = buildDayCells()
 
   return (
@@ -155,13 +179,11 @@ export default function CalendarPage() {
           </h1>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          {/* Prev / Today / Next */}
           <div style={{ display: 'flex', gap: '6px' }}>
             <button onClick={() => navigate(-1)} className="btn-ghost" style={{ padding: '8px 14px', borderRadius: '8px' }}>←</button>
             <button onClick={() => setCurrentDate(new Date())} className="btn-ghost" style={{ padding: '8px 14px', borderRadius: '8px' }}>Today</button>
             <button onClick={() => navigate(1)} className="btn-ghost" style={{ padding: '8px 14px', borderRadius: '8px' }}>→</button>
           </div>
-          {/* Week / Month toggle */}
           <div style={{ display: 'flex', gap: '6px' }}>
             <button
               onClick={() => setView('week')}
@@ -188,58 +210,98 @@ export default function CalendarPage() {
 
       {/* ── CALENDAR GRID ── */}
       <div className="fade-up-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px' }}>
-        {cells.map((cell, i) => (
-          <div
-            key={i}
-            onClick={() => openAssign(cell)}
-            style={{
-              minHeight: view === 'month' ? '110px' : '160px',
-              padding: '10px',
-              borderRadius: '12px',
-              border: cell.isToday
-                ? '1px solid rgba(201,168,76,0.5)'
-                : '1px solid rgba(201,168,76,0.08)',
-              background: cell.isToday
-                ? 'rgba(201,168,76,0.06)'
-                : cell.isCurrentMonth
-                  ? 'rgba(26,26,36,0.8)'
-                  : 'rgba(15,15,20,0.5)',
-              cursor: 'pointer',
-              transition: 'border-color 0.2s, background 0.2s',
-            }}
-          >
-            {/* Date number */}
-            <div style={{
-              fontFamily: 'Cormorant Garant, serif',
-              fontSize: '1.1rem',
-              fontWeight: 600,
-              color: cell.isToday ? 'var(--gold)' : cell.isCurrentMonth ? 'var(--platinum)' : 'var(--silver-dim)',
-              marginBottom: '6px',
-            }}>
-              {cell.date.getDate()}
-            </div>
+        {cells.map((cell, i) => {
+          const dateStr = toDateString(cell.date)
+          const isDragOver = dragOverDate === dateStr
+          return (
+            <div
+              key={i}
+              onClick={() => openAssign(cell)}
+              onDragOver={e => { e.preventDefault(); setDragOverDate(dateStr) }}
+              onDragLeave={() => setDragOverDate(null)}
+              onDrop={e => { e.preventDefault(); handleDrop(dateStr) }}
+              style={{
+                minHeight: view === 'month' ? '110px' : '160px',
+                padding: '10px',
+                borderRadius: '12px',
+                border: isDragOver
+                  ? '1px solid rgba(201,168,76,0.6)'
+                  : cell.isToday
+                    ? '1px solid rgba(201,168,76,0.5)'
+                    : '1px solid rgba(201,168,76,0.08)',
+                background: isDragOver
+                  ? 'rgba(201,168,76,0.1)'
+                  : cell.isToday
+                    ? 'rgba(201,168,76,0.06)'
+                    : cell.isCurrentMonth
+                      ? 'rgba(26,26,36,0.8)'
+                      : 'rgba(15,15,20,0.5)',
+                cursor: 'pointer',
+                transition: 'border-color 0.15s, background 0.15s',
+              }}
+            >
+              {/* Date number */}
+              <div style={{
+                fontFamily: 'Cormorant Garant, serif',
+                fontSize: '1.1rem',
+                fontWeight: 600,
+                color: cell.isToday ? 'var(--gold)' : cell.isCurrentMonth ? 'var(--platinum)' : 'var(--silver-dim)',
+                marginBottom: '6px',
+              }}>
+                {cell.date.getDate()}
+              </div>
 
-            {/* Workout pills */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              {cell.scheduledWorkouts.map((sw, j) => (
-                <div key={j} style={{
-                  padding: '3px 7px',
-                  borderRadius: '6px',
-                  fontSize: '0.65rem',
-                  fontWeight: 600,
-                  background: `${SPORT_COLORS[sw.workout?.sport] ?? '#4A9EDB'}18`,
-                  color: SPORT_COLORS[sw.workout?.sport] ?? '#4A9EDB',
-                  border: `1px solid ${SPORT_COLORS[sw.workout?.sport] ?? '#4A9EDB'}35`,
-                  overflow: 'hidden',
-                  whiteSpace: 'nowrap',
-                  textOverflow: 'ellipsis',
-                }}>
-                  {athletes.find(a => a.id === sw.athlete_id)?.full_name?.split(' ')[0] ?? '—'} · {sw.workout?.name ?? 'Workout'}
-                </div>
-              ))}
+              {/* Workout pills */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                {cell.scheduledWorkouts.map((sw, j) => {
+                  const color = SPORT_COLORS[sw.workout?.sport] ?? '#4A9EDB'
+                  const athleteName = athletes.find(a => a.id === sw.athlete_id)?.full_name?.split(' ')[0] ?? '—'
+                  return (
+                    <div
+                      key={j}
+                      draggable
+                      onDragStart={e => { e.stopPropagation(); setDraggingId(sw.id) }}
+                      onDragEnd={() => { setDraggingId(null); setDragOverDate(null) }}
+                      onClick={e => e.stopPropagation()}
+                      style={{
+                        padding: '3px 6px 3px 7px',
+                        borderRadius: '6px',
+                        fontSize: '0.65rem',
+                        fontWeight: 600,
+                        background: `${color}18`,
+                        color,
+                        border: `1px solid ${color}35`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '4px',
+                        opacity: draggingId === sw.id ? 0.4 : 1,
+                        cursor: 'grab',
+                        transition: 'opacity 0.15s',
+                      }}
+                    >
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+                        {athleteName} · {sw.workout?.name ?? 'Workout'}
+                      </span>
+                      <span
+                        onClick={e => handleDelete(sw.id, e)}
+                        title="Delete"
+                        style={{
+                          flexShrink: 0,
+                          lineHeight: 1,
+                          fontSize: '0.75rem',
+                          opacity: 0.5,
+                          cursor: 'pointer',
+                          padding: '0 2px',
+                        }}
+                      >×</span>
+                    </div>
+                  )
+                })}
+              </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
 
       {/* ── ZONE LEGEND ── */}
