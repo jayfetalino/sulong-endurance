@@ -66,7 +66,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
           {/* Logo */}
           <Link href={role === 'coach' ? '/coach' : '/athlete'} style={{ textDecoration: 'none' }}>
-            <img src="/logo.png" alt="Sulong" style={{ height: '52px', width: 'auto', filter: 'drop-shadow(0 0 8px rgba(201,168,76,0.3))' }} />
+            <img src="/sulong-logo-transparent.png" alt="Sulong" style={{ height: '48px', width: 'auto', filter: 'drop-shadow(0 0 8px rgba(201,168,76,0.3))' }} />
           </Link>
 
           {/* Nav Links */}
