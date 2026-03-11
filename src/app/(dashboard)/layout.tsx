@@ -58,7 +58,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           maxWidth: '1280px',
           margin: '0 auto',
           padding: '0 24px',
-          height: '64px',
+          height: '72px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -66,7 +66,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
           {/* Logo */}
           <Link href={role === 'coach' ? '/coach' : '/athlete'} style={{ textDecoration: 'none' }}>
-            <img src="/logo.png" alt="Sulong" style={{ height: '36px', width: 'auto' }} />
+            <img src="/logo.png" alt="Sulong" style={{ height: '52px', width: 'auto', filter: 'drop-shadow(0 0 8px rgba(201,168,76,0.3))' }} />
           </Link>
 
           {/* Nav Links */}
