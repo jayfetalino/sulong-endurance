@@ -85,15 +85,22 @@ export default function WorkoutBuilderPage() {
     const intervalsPayload: Interval[] = intervals.map(iv => ({
       id: iv.id, type: iv.type, label: iv.label || iv.type,
       duration_seconds: toDurationSeconds(iv),
-      hr_zone: iv.hr_zone,
+      heart_rate_zone: iv.hr_zone,
       power_target_pct: sport === 'bike' ? iv.power_target_pct : undefined,
       pace_target: (sport === 'run' || sport === 'swim') ? iv.pace_target : undefined,
       distance_meters: toDistanceMeters(iv) ?? undefined,
     }))
-    await supabase.from('workouts').insert({
+    const totalSeconds = intervalsPayload.reduce((s, iv) => s + (iv.duration_seconds ?? 0), 0)
+    const { error } = await supabase.from('workouts').insert({
       coach_id: user.id, name: name.trim(), sport,
       coach_notes: notes, intervals: intervalsPayload,
+      duration_seconds: totalSeconds, is_public: false,
     })
+    if (error) {
+      alert(`Failed to save workout: ${error.message}`)
+      setSaving(false)
+      return
+    }
     setSaving(false)
     router.push('/workouts')
   }
