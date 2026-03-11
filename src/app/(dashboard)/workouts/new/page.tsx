@@ -93,7 +93,7 @@ export default function WorkoutBuilderPage() {
     const totalSeconds = intervalsPayload.reduce((s, iv) => s + (iv.duration_seconds ?? 0), 0)
     const { error } = await supabase.from('workouts').insert({
       created_by: user.id, name: name.trim(), sport,
-      coach_notes: notes, intervals: intervalsPayload,
+      intervals: intervalsPayload,
       duration_seconds: totalSeconds, is_public: false,
     })
     if (error) {
