@@ -234,7 +234,7 @@ export default function CalendarPage() {
                   whiteSpace: 'nowrap',
                   textOverflow: 'ellipsis',
                 }}>
-                  {sw.workout?.name ?? 'Workout'}
+                  {athletes.find(a => a.id === sw.athlete_id)?.full_name?.split(' ')[0] ?? '—'} · {sw.workout?.name ?? 'Workout'}
                 </div>
               ))}
             </div>
