@@ -38,7 +38,7 @@ export default function WorkoutsPage() {
       const { data } = await supabase
         .from('workouts')
         .select('*')
-        .eq('coach_id', user.id)
+        .eq('created_by', user.id)
         .order('created_at', { ascending: false })
       setWorkouts(data ?? [])
       setLoading(false)

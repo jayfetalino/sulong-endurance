@@ -58,7 +58,7 @@ export default function CalendarPage() {
     const { data: prof } = await supabase.from('profiles').select('*').eq('id', user.id).single()
     setProfile(prof)
 
-    const { data: ws } = await supabase.from('workouts').select('*').eq('coach_id', user.id)
+    const { data: ws } = await supabase.from('workouts').select('*').eq('created_by', user.id)
     setWorkouts(ws ?? [])
 
     const { data: aths } = await supabase.from('profiles').select('*').eq('coach_id', user.id)
