@@ -110,7 +110,7 @@ export default function WorkoutDetailPage() {
             <div className="fade-up-1" style={{ marginBottom: '24px' }}>
               <div style={{ display: 'flex', gap: '3px', height: '16px', borderRadius: '8px', overflow: 'hidden', marginBottom: '8px' }}>
                 {intervals.map((iv, i) => (
-                  <div key={i} style={{ flex: iv.duration_seconds || 1, background: ZONE_COLORS[iv.hr_zone ?? iv.heart_rate_zone ?? 3] ?? sportColor, opacity: 0.85 }} />
+                  <div key={i} style={{ flex: iv.duration_seconds || 1, background: ZONE_COLORS[iv.heart_rate_zone ?? 3] ?? sportColor, opacity: 0.85 }} />
                 ))}
               </div>
               <p style={{ fontSize: '0.72rem', color: 'var(--silver-dim)' }}>Total: {formatDuration(totalSecs)} · {intervals.length} intervals</p>
@@ -121,7 +121,7 @@ export default function WorkoutDetailPage() {
             <h2 style={{ fontFamily: 'Cormorant Garant, serif', fontSize: '1.4rem', color: 'var(--platinum)', marginBottom: '20px' }}>Intervals</h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {intervals.map((iv, idx) => {
-                const zone = iv.hr_zone ?? iv.heart_rate_zone ?? 3
+                const zone = iv.heart_rate_zone ?? 3
                 const zoneColor = ZONE_COLORS[zone] ?? sportColor
                 return (
                   <div key={iv.id ?? idx} style={{ display: 'grid', gridTemplateColumns: '32px 1fr auto', gap: '16px', alignItems: 'center', padding: '14px 16px', borderRadius: '10px', background: 'rgba(255,255,255,0.02)', border: `1px solid ${zoneColor}25`, borderLeft: `3px solid ${zoneColor}` }}>
@@ -170,7 +170,7 @@ export default function WorkoutDetailPage() {
           <div className="fade-up-2 card-luxury" style={{ padding: '24px' }}>
             <h3 style={{ fontFamily: 'Cormorant Garant, serif', fontSize: '1.2rem', color: 'var(--platinum)', marginBottom: '16px' }}>Zone Breakdown</h3>
             {([1,2,3,4,5] as number[]).map(z => {
-              const zoneSecs = intervals.filter(iv => (iv.hr_zone ?? iv.heart_rate_zone ?? 3) === z).reduce((s, iv) => s + (iv.duration_seconds ?? 0), 0)
+              const zoneSecs = intervals.filter(iv => (iv.heart_rate_zone ?? 3) === z).reduce((s, iv) => s + (iv.duration_seconds ?? 0), 0)
               if (zoneSecs === 0) return null
               const pct = totalSecs > 0 ? Math.round((zoneSecs / totalSecs) * 100) : 0
               return (
@@ -187,10 +187,10 @@ export default function WorkoutDetailPage() {
             })}
           </div>
 
-          {workout.coach_notes && (
+          {workout.description && (
             <div className="fade-up-3 card-luxury" style={{ padding: '24px' }}>
               <h3 style={{ fontFamily: 'Cormorant Garant, serif', fontSize: '1.2rem', color: 'var(--platinum)', marginBottom: '12px' }}>Coach Notes</h3>
-              <p style={{ fontSize: '0.85rem', color: 'var(--silver)', lineHeight: 1.6 }}>{workout.coach_notes}</p>
+              <p style={{ fontSize: '0.85rem', color: 'var(--silver)', lineHeight: 1.6 }}>{workout.description}</p>
             </div>
           )}
 
