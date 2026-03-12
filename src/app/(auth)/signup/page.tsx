@@ -28,6 +28,14 @@ function goalsLabel(athleteType: string): string {
   return 'What is your goal? (e.g. finish time, first race, improvement)'
 }
 
+function goalsPlaceholder(athleteType: string): string {
+  if (athleteType === 'Cyclist')
+    return "What would make you say 'that coaching changed everything'? Let's make it happen"
+  if (athleteType === 'Swimmer')
+    return "What's the big swim goal we're chasing together? Dream big!"
+  return 'Share your goal...'
+}
+
 const fadeIn: React.CSSProperties = {
   animation: 'fadeUp 0.4s ease forwards',
 }
@@ -319,7 +327,7 @@ function SignupForm() {
               <textarea
                 value={coachingGoals}
                 onChange={e => setCoachingGoals(e.target.value)}
-                placeholder="Share your goal..."
+                placeholder={goalsPlaceholder(athleteType)}
                 rows={3}
                 className="input-luxury"
                 style={{ resize: 'vertical', minHeight: '80px' }}
