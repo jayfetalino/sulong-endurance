@@ -47,7 +47,7 @@ export default function CoachDashboard() {
         <p style={{ fontSize: '0.7rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--silver-dim)', marginBottom: '6px' }}>
           Coach Dashboard
         </p>
-        <h1 style={{ fontFamily: 'Cormorant Garant, serif', fontSize: isMobile ? '2rem' : isWide ? '3.2rem' : '2.8rem', fontWeight: 600, color: 'var(--platinum)', lineHeight: 1.1 }}>
+        <h1 style={{ fontFamily: 'Cormorant Garant, serif', fontSize: 'clamp(1.6rem, 5vw, 3.2rem)', fontWeight: 600, color: 'var(--platinum)', lineHeight: 1.1, wordBreak: 'break-word' }}>
           {greeting}, {profile?.full_name?.split(' ')[0]} 👋
         </h1>
         <p style={{ color: 'var(--silver)', marginTop: '6px', fontSize: '0.95rem' }}>
@@ -56,14 +56,14 @@ export default function CoachDashboard() {
       </div>
 
       {/* ── STAT CARDS ── */}
-      <div className="fade-up-1" style={{ display: 'grid', gridTemplateColumns: (isMobile || isTablet) ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: '16px', marginBottom: '32px' }}>
+      <div className="fade-up-1" style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : isTablet ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: '16px', marginBottom: '32px' }}>
         {[
           { label: 'Total Athletes',      value: stats.totalAthletes,    icon: '🏊' },
           { label: 'Workouts This Week',  value: stats.workoutsThisWeek, icon: '📋' },
           { label: 'Completed Today',     value: stats.completedToday,   icon: '✅' },
           { label: 'Upcoming Races',      value: stats.upcomingRaces,    icon: '🏁' },
         ].map(stat => (
-          <div key={stat.label} className="card-luxury" style={{ padding: '24px' }}>
+          <div key={stat.label} className="card-luxury" style={{ padding: '24px', width: '100%', boxSizing: 'border-box' }}>
             <div style={{ fontSize: '1.5rem', marginBottom: '12px' }}>{stat.icon}</div>
             <div style={{ fontFamily: 'Cormorant Garant, serif', fontSize: '2.8rem', fontWeight: 600, color: 'var(--gold)', lineHeight: 1 }}>
               {stat.value}
@@ -106,11 +106,15 @@ export default function CoachDashboard() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {athletes.map(athlete => (
                 <div key={athlete.id} style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  display: 'flex', flexDirection: isMobile ? 'column' : 'row',
+                  alignItems: isMobile ? 'flex-start' : 'center',
+                  justifyContent: 'space-between',
+                  gap: isMobile ? '12px' : '0',
                   padding: '16px 20px',
                   background: 'rgba(255,255,255,0.02)',
                   border: '1px solid rgba(201,168,76,0.08)',
                   borderRadius: '12px',
+                  width: '100%', boxSizing: 'border-box',
                   transition: 'border-color 0.2s',
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
@@ -118,7 +122,7 @@ export default function CoachDashboard() {
                       width: '42px', height: '42px', borderRadius: '50%',
                       background: 'linear-gradient(135deg, var(--gold-dim), var(--gold))',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontWeight: 700, fontSize: '1rem', color: '#0A0A0F',
+                      fontWeight: 700, fontSize: '1rem', color: '#0A0A0F', flexShrink: 0,
                     }}>
                       {athlete.full_name.charAt(0)}
                     </div>
@@ -129,18 +133,18 @@ export default function CoachDashboard() {
                       </div>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: isMobile ? 'flex-start' : 'flex-end' }}>
+                  <div style={{ display: 'flex', gap: '8px', width: isMobile ? '100%' : 'auto' }}>
                     <button
                       onClick={() => router.push(`/calendar?athlete=${athlete.id}`)}
                       className="btn-ghost"
-                      style={{ padding: '7px 14px', borderRadius: '8px' }}
+                      style={{ padding: '7px 14px', borderRadius: '8px', flex: isMobile ? 1 : undefined }}
                     >
                       View Plan
                     </button>
                     <button
                       onClick={() => router.push(`/workouts/new?athlete=${athlete.id}`)}
                       className="btn-gold"
-                      style={{ padding: '7px 14px', borderRadius: '8px', border: 'none' }}
+                      style={{ padding: '7px 14px', borderRadius: '8px', border: 'none', flex: isMobile ? 1 : undefined }}
                     >
                       Add Workout
                     </button>

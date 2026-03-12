@@ -144,6 +144,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         maxWidth: maxW,
         margin: '0 auto',
         padding: isMobile ? '20px 16px 80px' : isTablet ? '32px 20px' : '40px 24px',
+        width: '100%',
+        boxSizing: 'border-box',
+        overflowX: 'hidden',
       }}>
         {children}
       </main>
