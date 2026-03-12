@@ -154,7 +154,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           bottom: 0,
           left: 0,
           right: 0,
-          height: '64px',
+          height: 'calc(64px + env(safe-area-inset-bottom))',
           background: 'rgba(10,10,15,0.97)',
           backdropFilter: 'blur(20px)',
           borderTop: '1px solid rgba(201,168,76,0.15)',

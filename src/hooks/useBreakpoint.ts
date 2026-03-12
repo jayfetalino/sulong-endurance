@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 
 export function useBreakpoint() {
-  const [width, setWidth] = useState(1280) // SSR-safe default (desktop)
+  const [width, setWidth] = useState(0) // mobile-first SSR default
   useEffect(() => {
     function update() { setWidth(window.innerWidth) }
     update()

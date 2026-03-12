@@ -188,8 +188,8 @@ export default function AthleteDashboard() {
         <p style={{ fontSize: '0.7rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--silver-dim)', marginBottom: '12px' }}>
           This Week
         </p>
-        <div style={{ overflowX: isMobile ? 'auto' : 'visible' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px', minWidth: isMobile ? '480px' : 'auto' }}>
+        <div style={{ overflowX: isMobile ? 'auto' : 'visible', width: '100%' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px', minWidth: isMobile ? '350px' : 'auto' }}>
           {weekDays.map((day, i) => {
             const dateStr = day.toISOString().split('T')[0]
             const workout = weekWorkouts.find(w => w.scheduled_date === dateStr)

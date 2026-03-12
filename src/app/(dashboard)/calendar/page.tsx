@@ -202,8 +202,8 @@ export default function CalendarPage() {
       </div>
 
       {/* ── DAY NAME HEADERS ── */}
-      <div style={{ overflowX: isMobile ? 'auto' : 'visible' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px', marginBottom: '8px', minWidth: isMobile ? '560px' : 'auto' }}>
+      <div style={{ overflowX: isMobile ? 'auto' : 'visible', width: '100%' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px', marginBottom: '8px', minWidth: isMobile ? '380px' : 'auto' }}>
         {DAY_NAMES.map(d => (
           <div key={d} style={{ textAlign: 'center', fontSize: '0.65rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--silver-dim)', padding: '6px 0' }}>
             {d}
@@ -212,7 +212,7 @@ export default function CalendarPage() {
       </div>
 
       {/* ── CALENDAR GRID ── */}
-      <div className="fade-up-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px', minWidth: isMobile ? '560px' : 'auto' }}>
+      <div className="fade-up-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px', minWidth: isMobile ? '380px' : 'auto' }}>
         {cells.map((cell, i) => {
           const dateStr = toDateString(cell.date)
           const isDragOver = dragOverDate === dateStr
