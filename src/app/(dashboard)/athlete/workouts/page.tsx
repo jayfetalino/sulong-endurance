@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
@@ -25,41 +25,56 @@ function formatDate(dateStr: string) {
 }
 
 export default function AthleteWorkoutsPage() {
-  const [upcoming, setUpcoming]   = useState<ScheduledWorkout[]>([])
+  const [upcoming,  setUpcoming]  = useState<ScheduledWorkout[]>([])
+  const [missed,    setMissed]    = useState<ScheduledWorkout[]>([])
   const [completed, setCompleted] = useState<ScheduledWorkout[]>([])
-  const [loading, setLoading]     = useState(true)
+  const [loading,   setLoading]   = useState(true)
   const router   = useRouter()
   const supabase = createSupabaseBrowserClient()
   const { isMobile } = useBreakpoint()
 
-  useEffect(() => {
-    async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { router.push('/login'); return }
+  const load = useCallback(async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) { router.push('/login'); return }
 
-      const { data } = await supabase
-        .from('scheduled_workouts')
-        .select('*, workout:workouts(*)')
-        .eq('athlete_id', user.id)
-        .order('scheduled_date', { ascending: false })
+    // Auto-mark overdue scheduled workouts as missed
+    const today = new Date().toISOString().slice(0, 10)
+    await supabase
+      .from('scheduled_workouts')
+      .update({ status: 'missed' })
+      .eq('athlete_id', user.id)
+      .eq('status', 'scheduled')
+      .lt('scheduled_date', today)
 
-      if (data) {
-        setUpcoming(data.filter(w => w.status === 'pending').sort((a, b) => a.scheduled_date.localeCompare(b.scheduled_date)))
-        setCompleted(data.filter(w => w.status === 'completed' || w.status === 'skipped').sort((a, b) => b.scheduled_date.localeCompare(a.scheduled_date)))
-      }
-      setLoading(false)
+    // Re-fetch all workouts
+    const { data } = await supabase
+      .from('scheduled_workouts')
+      .select('*, workout:workouts(*)')
+      .eq('athlete_id', user.id)
+      .order('scheduled_date', { ascending: false })
+
+    if (data) {
+      setUpcoming(
+        data.filter(w => w.status === 'scheduled' && w.scheduled_date >= today)
+            .sort((a, b) => a.scheduled_date.localeCompare(b.scheduled_date))
+      )
+      setMissed(
+        data.filter(w => w.status === 'missed')
+            .sort((a, b) => b.scheduled_date.localeCompare(a.scheduled_date))
+      )
+      setCompleted(
+        data.filter(w => w.status === 'completed')
+            .sort((a, b) => b.scheduled_date.localeCompare(a.scheduled_date))
+      )
     }
-    load()
-  }, [])
+    setLoading(false)
+  }, [supabase, router])
+
+  useEffect(() => { load() }, [load])
 
   async function markComplete(id: string) {
     await supabase.from('scheduled_workouts').update({ status: 'completed' }).eq('id', id)
-    setUpcoming(prev => {
-      const moved = prev.find(w => w.id === id)
-      if (!moved) return prev
-      setCompleted(c => [{ ...moved, status: 'completed' }, ...c])
-      return prev.filter(w => w.id !== id)
-    })
+    await load()
   }
 
   if (loading) return (
@@ -82,7 +97,7 @@ export default function AthleteWorkoutsPage() {
           My Workouts
         </h1>
         <p style={{ color: 'var(--silver)', marginTop: '6px' }}>
-          {upcoming.length} upcoming · {completed.length} completed
+          {upcoming.length} upcoming · {missed.length} missed · {completed.length} completed
         </p>
       </div>
 
@@ -91,7 +106,6 @@ export default function AthleteWorkoutsPage() {
         <p style={{ fontSize: '0.7rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--silver-dim)', marginBottom: '16px' }}>
           Upcoming
         </p>
-
         {upcoming.length === 0 ? (
           <div className="card-luxury" style={{ padding: '40px', textAlign: 'center' }}>
             <div style={{ fontSize: '2rem', marginBottom: '12px' }}>📭</div>
@@ -106,12 +120,25 @@ export default function AthleteWorkoutsPage() {
         )}
       </div>
 
-      {/* Completed */}
-      <div className="fade-up-2">
-        <p style={{ fontSize: '0.7rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--silver-dim)', marginBottom: '16px' }}>
-          Completed &amp; Skipped
-        </p>
+      {/* Missed */}
+      {missed.length > 0 && (
+        <div className="fade-up-2" style={{ marginBottom: '40px' }}>
+          <p style={{ fontSize: '0.7rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--silver-dim)', marginBottom: '16px' }}>
+            Missed
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {missed.map(sw => (
+              <WorkoutCard key={sw.id} sw={sw} isMobile={isMobile} onView={id => router.push(`/workouts/${id}`)} />
+            ))}
+          </div>
+        </div>
+      )}
 
+      {/* Completed */}
+      <div className="fade-up-3">
+        <p style={{ fontSize: '0.7rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--silver-dim)', marginBottom: '16px' }}>
+          Completed
+        </p>
         {completed.length === 0 ? (
           <div className="card-luxury" style={{ padding: '40px', textAlign: 'center' }}>
             <p style={{ color: 'var(--silver)', fontSize: '0.9rem' }}>No completed workouts yet. Get after it!</p>
@@ -140,10 +167,10 @@ function WorkoutCard({
   onMarkComplete?: (id: string) => void
   onView: (id: string) => void
 }) {
-  const color  = SPORT_COLORS[sw.workout.sport] ?? 'var(--gold)'
-  const icon   = SPORT_ICONS[sw.workout.sport]  ?? '🏋️'
-  const isDone = sw.status === 'completed'
-  const isSkip = sw.status === 'skipped'
+  const color      = SPORT_COLORS[sw.workout.sport] ?? 'var(--gold)'
+  const icon       = SPORT_ICONS[sw.workout.sport]  ?? '🏋️'
+  const isDone     = sw.status === 'completed'
+  const isMissed   = sw.status === 'missed'
 
   return (
     <div
@@ -186,9 +213,9 @@ function WorkoutCard({
                 Completed ✓
               </span>
             )}
-            {isSkip && (
-              <span style={{ fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 8px', borderRadius: '20px', background: 'rgba(180,180,180,0.08)', color: 'var(--silver-dim)', border: '1px solid rgba(180,180,180,0.15)' }}>
-                Skipped
+            {isMissed && (
+              <span style={{ fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 8px', borderRadius: '20px', background: 'rgba(219,74,106,0.1)', color: '#DB4A6A', border: '1px solid rgba(219,74,106,0.3)' }}>
+                Missed
               </span>
             )}
           </div>
@@ -208,8 +235,8 @@ function WorkoutCard({
         </div>
       </div>
 
-      {/* Actions */}
-      {onMarkComplete && !isDone && !isSkip && (
+      {/* Actions — only for upcoming (scheduled) */}
+      {onMarkComplete && !isDone && !isMissed && (
         <div style={{ display: 'flex', gap: '8px', width: isMobile ? '100%' : undefined, flexShrink: 0 }}>
           <button
             onClick={e => { e.stopPropagation(); onMarkComplete(sw.id) }}
@@ -221,7 +248,7 @@ function WorkoutCard({
           <button
             onClick={e => { e.stopPropagation(); onView(sw.workout.id) }}
             className="btn-ghost"
-            style={{ flex: isMobile ? 1 : undefined, padding: '8px 18px', borderRadius: '8px', fontSize: '0.78rem' }}
+            style={{ flex: isMobile ? 1 : undefined, padding: '8px 18px', borderRadius: '8px', fontSize: '0.78px' }}
           >
             View →
           </button>
