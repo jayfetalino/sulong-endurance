@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
+import { useBreakpoint } from '@/hooks/useBreakpoint'
 
 interface Workout { id: string; name: string; sport: string; description: string | null; duration_seconds: number; intervals: { id: string }[] }
 interface ScheduledWorkout { id: string; scheduled_date: string; status: string; coach_notes: string | null; workout: Workout }
@@ -29,6 +30,7 @@ export default function AthleteWorkoutsPage() {
   const [loading, setLoading]     = useState(true)
   const router   = useRouter()
   const supabase = createSupabaseBrowserClient()
+  const { isMobile } = useBreakpoint()
 
   useEffect(() => {
     async function load() {
@@ -76,7 +78,7 @@ export default function AthleteWorkoutsPage() {
         <p style={{ fontSize: '0.7rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--silver-dim)', marginBottom: '6px' }}>
           Athlete
         </p>
-        <h1 style={{ fontFamily: 'Cormorant Garant, serif', fontSize: '2.8rem', fontWeight: 600, color: 'var(--platinum)', lineHeight: 1.1 }}>
+        <h1 style={{ fontFamily: 'Cormorant Garant, serif', fontSize: 'clamp(1.6rem, 5vw, 2.8rem)', fontWeight: 600, color: 'var(--platinum)', lineHeight: 1.1, wordBreak: 'break-word' }}>
           My Workouts
         </h1>
         <p style={{ color: 'var(--silver)', marginTop: '6px' }}>
@@ -98,7 +100,7 @@ export default function AthleteWorkoutsPage() {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {upcoming.map(sw => (
-              <WorkoutCard key={sw.id} sw={sw} onMarkComplete={markComplete} />
+              <WorkoutCard key={sw.id} sw={sw} isMobile={isMobile} onMarkComplete={markComplete} onView={id => router.push(`/workouts/${id}`)} />
             ))}
           </div>
         )}
@@ -107,7 +109,7 @@ export default function AthleteWorkoutsPage() {
       {/* Completed */}
       <div className="fade-up-2">
         <p style={{ fontSize: '0.7rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--silver-dim)', marginBottom: '16px' }}>
-          Completed & Skipped
+          Completed &amp; Skipped
         </p>
 
         {completed.length === 0 ? (
@@ -117,7 +119,7 @@ export default function AthleteWorkoutsPage() {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {completed.map(sw => (
-              <WorkoutCard key={sw.id} sw={sw} />
+              <WorkoutCard key={sw.id} sw={sw} isMobile={isMobile} onView={id => router.push(`/workouts/${id}`)} />
             ))}
           </div>
         )}
@@ -127,70 +129,103 @@ export default function AthleteWorkoutsPage() {
   )
 }
 
-function WorkoutCard({ sw, onMarkComplete }: { sw: ScheduledWorkout; onMarkComplete?: (id: string) => void }) {
-  const color   = SPORT_COLORS[sw.workout.sport] ?? 'var(--gold)'
-  const icon    = SPORT_ICONS[sw.workout.sport]  ?? '🏋️'
-  const isDone  = sw.status === 'completed'
-  const isSkip  = sw.status === 'skipped'
+function WorkoutCard({
+  sw,
+  isMobile,
+  onMarkComplete,
+  onView,
+}: {
+  sw: ScheduledWorkout
+  isMobile: boolean
+  onMarkComplete?: (id: string) => void
+  onView: (id: string) => void
+}) {
+  const color  = SPORT_COLORS[sw.workout.sport] ?? 'var(--gold)'
+  const icon   = SPORT_ICONS[sw.workout.sport]  ?? '🏋️'
+  const isDone = sw.status === 'completed'
+  const isSkip = sw.status === 'skipped'
 
   return (
-    <div className="card-luxury" style={{ padding: '20px 24px', display: 'flex', alignItems: 'center', gap: '20px' }}>
+    <div
+      className="card-luxury"
+      onClick={() => onView(sw.workout.id)}
+      style={{
+        padding: isMobile ? '16px' : '20px 24px',
+        display: 'flex',
+        flexDirection: isMobile ? 'column' : 'row',
+        alignItems: isMobile ? 'flex-start' : 'center',
+        gap: isMobile ? '12px' : '20px',
+        cursor: 'pointer',
+        width: '100%',
+        boxSizing: 'border-box',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', width: isMobile ? '100%' : undefined }}>
+        {/* Sport icon */}
+        <div style={{
+          width: '48px', height: '48px', borderRadius: '12px', flexShrink: 0,
+          background: `${color}18`, border: `1px solid ${color}35`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: '1.4rem',
+        }}>
+          {icon}
+        </div>
 
-      {/* Sport icon */}
-      <div style={{
-        width: '48px', height: '48px', borderRadius: '12px', flexShrink: 0,
-        background: `${color}18`, border: `1px solid ${color}35`,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: '1.4rem',
-      }}>
-        {icon}
-      </div>
-
-      {/* Info */}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
-          <span style={{
-            fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase',
-            padding: '2px 8px', borderRadius: '20px',
-            background: `${color}18`, color, border: `1px solid ${color}35`,
-          }}>
-            {sw.workout.sport}
-          </span>
-          {isDone && (
-            <span style={{ fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 8px', borderRadius: '20px', background: 'rgba(74,219,138,0.1)', color: '#4ADB8A', border: '1px solid rgba(74,219,138,0.3)' }}>
-              Completed ✓
+        {/* Info */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
+            <span style={{
+              fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase',
+              padding: '2px 8px', borderRadius: '20px',
+              background: `${color}18`, color, border: `1px solid ${color}35`,
+            }}>
+              {sw.workout.sport}
             </span>
-          )}
-          {isSkip && (
-            <span style={{ fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 8px', borderRadius: '20px', background: 'rgba(180,180,180,0.08)', color: 'var(--silver-dim)', border: '1px solid rgba(180,180,180,0.15)' }}>
-              Skipped
-            </span>
-          )}
-        </div>
-        <div style={{ fontFamily: 'Cormorant Garant, serif', fontSize: '1.2rem', fontWeight: 600, color: 'var(--platinum)', marginBottom: '2px' }}>
-          {sw.workout.name}
-        </div>
-        <div style={{ fontSize: '0.78rem', color: 'var(--silver-dim)', display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-          <span>{formatDate(sw.scheduled_date)}</span>
-          {sw.workout.duration_seconds > 0 && <span>{formatDuration(sw.workout.duration_seconds)}</span>}
-          {sw.workout.intervals?.length > 0 && <span>{sw.workout.intervals.length} intervals</span>}
-        </div>
-        {sw.coach_notes && (
-          <div style={{ marginTop: '8px', fontSize: '0.78rem', color: 'var(--silver)', fontStyle: 'italic', paddingLeft: '10px', borderLeft: '2px solid rgba(201,168,76,0.3)' }}>
-            {sw.coach_notes}
+            {isDone && (
+              <span style={{ fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 8px', borderRadius: '20px', background: 'rgba(74,219,138,0.1)', color: '#4ADB8A', border: '1px solid rgba(74,219,138,0.3)' }}>
+                Completed ✓
+              </span>
+            )}
+            {isSkip && (
+              <span style={{ fontSize: '0.6rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 8px', borderRadius: '20px', background: 'rgba(180,180,180,0.08)', color: 'var(--silver-dim)', border: '1px solid rgba(180,180,180,0.15)' }}>
+                Skipped
+              </span>
+            )}
           </div>
-        )}
+          <div style={{ fontFamily: 'Cormorant Garant, serif', fontSize: '1.2rem', fontWeight: 600, color: 'var(--platinum)', marginBottom: '2px' }}>
+            {sw.workout.name}
+          </div>
+          <div style={{ fontSize: '0.78rem', color: 'var(--silver-dim)', display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+            <span>{formatDate(sw.scheduled_date)}</span>
+            {sw.workout.duration_seconds > 0 && <span>{formatDuration(sw.workout.duration_seconds)}</span>}
+            {sw.workout.intervals?.length > 0 && <span>{sw.workout.intervals.length} intervals</span>}
+          </div>
+          {sw.coach_notes && (
+            <div style={{ marginTop: '8px', fontSize: '0.78rem', color: 'var(--silver)', fontStyle: 'italic', paddingLeft: '10px', borderLeft: '2px solid rgba(201,168,76,0.3)' }}>
+              {sw.coach_notes}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Action */}
+      {/* Actions */}
       {onMarkComplete && !isDone && !isSkip && (
-        <button
-          onClick={() => onMarkComplete(sw.id)}
-          className="btn-gold"
-          style={{ flexShrink: 0, padding: '8px 18px', borderRadius: '8px', border: 'none', fontSize: '0.78rem' }}
-        >
-          Done ✓
-        </button>
+        <div style={{ display: 'flex', gap: '8px', width: isMobile ? '100%' : undefined, flexShrink: 0 }}>
+          <button
+            onClick={e => { e.stopPropagation(); onMarkComplete(sw.id) }}
+            className="btn-gold"
+            style={{ flex: isMobile ? 1 : undefined, padding: '8px 18px', borderRadius: '8px', border: 'none', fontSize: '0.78rem' }}
+          >
+            Done ✓
+          </button>
+          <button
+            onClick={e => { e.stopPropagation(); onView(sw.workout.id) }}
+            className="btn-ghost"
+            style={{ flex: isMobile ? 1 : undefined, padding: '8px 18px', borderRadius: '8px', fontSize: '0.78rem' }}
+          >
+            View →
+          </button>
+        </div>
       )}
     </div>
   )
