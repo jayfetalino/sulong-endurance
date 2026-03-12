@@ -20,7 +20,7 @@ export default function CoachDashboard() {
   const [showInviteModal, setShowInviteModal] = useState(false)
   const router   = useRouter()
   const supabase = createSupabaseBrowserClient()
-  const { isMobile, isWide } = useBreakpoint()
+  const { isMobile, isTablet, isWide } = useBreakpoint()
 
   useEffect(() => {
     async function load() {
@@ -56,7 +56,7 @@ export default function CoachDashboard() {
       </div>
 
       {/* ── STAT CARDS ── */}
-      <div className="fade-up-1" style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: '16px', marginBottom: '32px' }}>
+      <div className="fade-up-1" style={{ display: 'grid', gridTemplateColumns: (isMobile || isTablet) ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: '16px', marginBottom: '32px' }}>
         {[
           { label: 'Total Athletes',      value: stats.totalAthletes,    icon: '🏊' },
           { label: 'Workouts This Week',  value: stats.workoutsThisWeek, icon: '📋' },
