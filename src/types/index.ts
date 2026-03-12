@@ -30,6 +30,9 @@ export interface Profile {
   ftp: number | null            // Cycling fitness number (watts). null until tested.
   css: number | null            // Swim speed (min per 100m). null until tested.
   threshold_pace: number | null // Run pace (min per km). null until tested.
+  athlete_type: string | null   // 'Runner', 'Cyclist', 'Swimmer', 'Triathlete'
+  race_distance: string | null  // e.g. '42K (26.2M / Marathon)', 'Full Ironman (140.6)'
+  coaching_goals: string | null // Free-text goal description
   created_at: string            // When they joined (ISO date string)
 }
 

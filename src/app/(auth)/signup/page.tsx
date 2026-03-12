@@ -7,20 +7,58 @@ import { useSearchParams } from 'next/navigation'
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
 import Link from 'next/link'
 
+const RUNNER_DISTANCES = [
+  '5K (3.1M)',
+  '10K (6.2M)',
+  '21K (13.1M / Half Marathon)',
+  '42K (26.2M / Marathon)',
+  'Other',
+]
+
+const TRIATHLETE_DISTANCES = [
+  'Sprint Distance',
+  'Olympic Distance',
+  'Half Ironman (70.3)',
+  'Full Ironman (140.6)',
+]
+
+function goalsLabel(athleteType: string): string {
+  if (athleteType === 'Cyclist') return 'Why are you seeking coaching right now?'
+  if (athleteType === 'Swimmer') return 'What do you want to achieve with coaching?'
+  return 'What is your goal? (e.g. finish time, first race, improvement)'
+}
+
+const fadeIn: React.CSSProperties = {
+  animation: 'fadeUp 0.4s ease forwards',
+}
+
 function SignupForm() {
   const searchParams = useSearchParams()
-  const [fullName, setFullName]     = useState('')
-  const [email, setEmail]           = useState('')
-  const [password, setPassword]     = useState('')
-  const [role, setRole]             = useState<'coach' | 'athlete'>('athlete')
-  const [inviteCode, setInviteCode] = useState(
+  const [fullName, setFullName]         = useState('')
+  const [email, setEmail]               = useState('')
+  const [password, setPassword]         = useState('')
+  const [inviteCode, setInviteCode]     = useState(
     searchParams.get('code')?.toUpperCase() ?? ''
   )
+  const [athleteType, setAthleteType]   = useState('')
+  const [raceDistance, setRaceDistance] = useState('')
+  const [coachingGoals, setCoachingGoals] = useState('')
   const [error, setError]     = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
   const router   = useRouter()
   const supabase = createSupabaseBrowserClient()
+
+  const needsDistance = athleteType === 'Runner' || athleteType === 'Triathlete'
+  const showDistance  = needsDistance
+  const showGoals     = athleteType === 'Cyclist' || athleteType === 'Swimmer' ||
+                        (needsDistance && raceDistance !== '')
+
+  function handleAthleteTypeChange(value: string) {
+    setAthleteType(value)
+    setRaceDistance('')
+    setCoachingGoals('')
+  }
 
   async function handleSignup() {
     setLoading(true)
@@ -32,28 +70,42 @@ function SignupForm() {
       return
     }
 
-    let coachId: string | null = null
-    if (role === 'athlete') {
-      if (!inviteCode.trim()) {
-        setError('Please enter your coach invite code.')
-        setLoading(false)
-        return
-      }
+    if (!inviteCode.trim()) {
+      setError('Please enter your coach invite code.')
+      setLoading(false)
+      return
+    }
 
-      const { data: coachData, error: coachError } = await supabase
-        .from('profiles')
-        .select('id, full_name')
-        .eq('invite_code', inviteCode.trim().toUpperCase())
-        .eq('role', 'coach')
-        .single()
+    if (!athleteType) {
+      setError('Please select your athlete type.')
+      setLoading(false)
+      return
+    }
 
-      if (coachError || !coachData) {
-        setError('Invalid invite code. Please check with your coach.')
-        setLoading(false)
-        return
-      }
+    if (needsDistance && !raceDistance) {
+      setError('Please select your race distance.')
+      setLoading(false)
+      return
+    }
 
-      coachId = coachData.id
+    if (!coachingGoals.trim()) {
+      setError('Please share your coaching goal.')
+      setLoading(false)
+      return
+    }
+
+    // Validate invite code
+    const { data: coachData, error: coachError } = await supabase
+      .from('profiles')
+      .select('id, full_name')
+      .eq('invite_code', inviteCode.trim().toUpperCase())
+      .eq('role', 'coach')
+      .single()
+
+    if (coachError || !coachData) {
+      setError('Invalid invite code. Please check with your coach.')
+      setLoading(false)
+      return
     }
 
     const { data, error: signUpError } = await supabase.auth.signUp({ email, password })
@@ -68,8 +120,8 @@ function SignupForm() {
       const { error: profileError } = await supabase.rpc('create_profile', {
         user_id:       data.user.id,
         user_name:     fullName.trim(),
-        user_role:     role,
-        user_coach_id: coachId,
+        user_role:     'athlete',
+        user_coach_id: coachData.id,
       })
 
       if (profileError) {
@@ -77,15 +129,31 @@ function SignupForm() {
         setLoading(false)
         return
       }
+
+      await supabase
+        .from('profiles')
+        .update({
+          athlete_type:   athleteType,
+          race_distance:  raceDistance || null,
+          coaching_goals: coachingGoals.trim(),
+        })
+        .eq('id', data.user.id)
     }
 
-    router.push(role === 'coach' ? '/coach' : '/athlete')
+    router.push('/athlete')
   }
 
   const labelStyle: React.CSSProperties = {
     display: 'block', fontSize: '0.65rem', fontWeight: 500,
     letterSpacing: '0.12em', textTransform: 'uppercase',
     color: 'var(--silver)', marginBottom: '8px',
+  }
+
+  const selectStyle: React.CSSProperties = {
+    width: '100%',
+    background: 'transparent',
+    color: 'var(--platinum)',
+    cursor: 'pointer',
   }
 
   return (
@@ -193,50 +261,69 @@ function SignupForm() {
             />
           </div>
 
-          {/* Role toggle */}
+          {/* Invite code */}
           <div style={{ marginBottom: '16px' }}>
-            <label style={labelStyle}>I am a...</label>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-              {(['athlete', 'coach'] as const).map(r => (
-                <button
-                  key={r}
-                  onClick={() => setRole(r)}
-                  style={{
-                    padding: '12px',
-                    borderRadius: '10px',
-                    border: role === r ? '1px solid rgba(201,168,76,0.5)' : '1px solid rgba(201,168,76,0.12)',
-                    background: role === r ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.02)',
-                    color: role === r ? 'var(--gold)' : 'var(--silver)',
-                    fontFamily: 'DM Sans, sans-serif',
-                    fontSize: '0.8rem',
-                    fontWeight: 600,
-                    letterSpacing: '0.05em',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                  }}
-                >
-                  {r === 'athlete' ? '🏊 Athlete' : '📋 Coach'}
-                </button>
-              ))}
-            </div>
+            <label style={labelStyle}>Coach Invite Code</label>
+            <input
+              type="text"
+              value={inviteCode}
+              onChange={e => setInviteCode(e.target.value.toUpperCase())}
+              placeholder="ABC123"
+              maxLength={6}
+              className="input-luxury"
+              style={{ textAlign: 'center', letterSpacing: '0.3em', fontFamily: 'DM Mono, monospace', fontSize: '1.1rem', textTransform: 'uppercase' }}
+            />
+            <p style={{ fontSize: '0.72rem', color: 'var(--silver-dim)', marginTop: '6px' }}>
+              Get this code from your coach.
+            </p>
           </div>
 
-          {/* Invite code */}
-          {role === 'athlete' && (
-            <div style={{ marginBottom: '16px' }}>
-              <label style={labelStyle}>Coach Invite Code</label>
-              <input
-                type="text"
-                value={inviteCode}
-                onChange={e => setInviteCode(e.target.value.toUpperCase())}
-                placeholder="ABC123"
-                maxLength={6}
+          {/* Athlete Type */}
+          <div style={{ marginBottom: '16px' }}>
+            <label style={labelStyle}>I am a...</label>
+            <select
+              value={athleteType}
+              onChange={e => handleAthleteTypeChange(e.target.value)}
+              className="input-luxury"
+              style={selectStyle}
+            >
+              <option value="" disabled style={{ background: 'var(--obsidian-2)' }}>Select athlete type</option>
+              {['Runner', 'Cyclist', 'Swimmer', 'Triathlete'].map(t => (
+                <option key={t} value={t} style={{ background: 'var(--obsidian-2)' }}>{t}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Race Distance (Runner or Triathlete) */}
+          {showDistance && (
+            <div style={{ marginBottom: '16px', ...fadeIn }}>
+              <label style={labelStyle}>Race Distance</label>
+              <select
+                value={raceDistance}
+                onChange={e => { setRaceDistance(e.target.value); setCoachingGoals('') }}
                 className="input-luxury"
-                style={{ textAlign: 'center', letterSpacing: '0.3em', fontFamily: 'DM Mono, monospace', fontSize: '1.1rem', textTransform: 'uppercase' }}
+                style={selectStyle}
+              >
+                <option value="" disabled style={{ background: 'var(--obsidian-2)' }}>Select distance</option>
+                {(athleteType === 'Runner' ? RUNNER_DISTANCES : TRIATHLETE_DISTANCES).map(d => (
+                  <option key={d} value={d} style={{ background: 'var(--obsidian-2)' }}>{d}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Coaching Goals */}
+          {showGoals && (
+            <div style={{ marginBottom: '16px', ...fadeIn }}>
+              <label style={labelStyle}>{goalsLabel(athleteType)}</label>
+              <textarea
+                value={coachingGoals}
+                onChange={e => setCoachingGoals(e.target.value)}
+                placeholder="Share your goal..."
+                rows={3}
+                className="input-luxury"
+                style={{ resize: 'vertical', minHeight: '80px' }}
               />
-              <p style={{ fontSize: '0.72rem', color: 'var(--silver-dim)', marginTop: '6px' }}>
-                Get this code from your coach.
-              </p>
             </div>
           )}
 
