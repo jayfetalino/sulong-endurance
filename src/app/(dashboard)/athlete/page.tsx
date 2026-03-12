@@ -82,7 +82,7 @@ export default function AthleteDashboard() {
         <p style={{ fontSize: '0.7rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--silver-dim)', marginBottom: '6px' }}>
           Athlete Dashboard
         </p>
-        <h1 style={{ fontFamily: 'Cormorant Garant, serif', fontSize: isMobile ? '2rem' : isWide ? '3.2rem' : '2.8rem', fontWeight: 600, color: 'var(--platinum)', lineHeight: 1.1 }}>
+        <h1 style={{ fontFamily: 'Cormorant Garant, serif', fontSize: 'clamp(1.6rem, 5vw, 3.2rem)', fontWeight: 600, color: 'var(--platinum)', lineHeight: 1.1, wordBreak: 'break-word' }}>
           {getGreeting()}, {profile?.full_name?.split(' ')[0]} 👋
         </h1>
         <p style={{ color: 'var(--silver)', marginTop: '6px' }}>
