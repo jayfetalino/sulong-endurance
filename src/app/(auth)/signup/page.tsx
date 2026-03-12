@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useSearchParams } from 'next/navigation'
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
 import Link from 'next/link'
+import { useBreakpoint } from '@/hooks/useBreakpoint'
 
 const RUNNER_DISTANCES = [
   '5K (3.1M)',
@@ -52,6 +53,7 @@ function SignupForm() {
 
   const router   = useRouter()
   const supabase = createSupabaseBrowserClient()
+  const { isMobile } = useBreakpoint()
 
   const needsDistance = athleteType === 'Runner' || athleteType === 'Triathlete'
   const showDistance  = needsDistance
@@ -167,7 +169,7 @@ function SignupForm() {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      padding: '24px',
+      padding: isMobile ? '16px' : '24px',
     }}>
       {/* Radial glow */}
       <div style={{
@@ -182,7 +184,7 @@ function SignupForm() {
 
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-          <img src="/sulong-logo-transparent.png" alt="Sulong" style={{ width: '360px', height: 'auto' }} />
+          <img src="/sulong-logo-transparent.png" alt="Sulong" style={{ width: isMobile ? '200px' : '360px', height: 'auto' }} />
           <div style={{
             fontFamily: 'DM Sans, sans-serif',
             fontSize: '0.6rem',
@@ -201,7 +203,7 @@ function SignupForm() {
         </div>
 
         {/* Card */}
-        <div className="card-luxury" style={{ padding: '40px' }}>
+        <div className="card-luxury" style={{ padding: isMobile ? '24px 20px' : '40px' }}>
           <h1 style={{
             fontFamily: 'Cormorant Garant, serif',
             fontSize: '2rem',

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
 import type { Workout, Interval } from '@/types'
+import { useBreakpoint } from '@/hooks/useBreakpoint'
 
 const ZONE_COLORS: Record<number, string> = {
   1: '#6B8CAE', 2: '#4A9EDB', 3: '#4ADB8A', 4: '#E8A84C', 5: '#DB4A6A',
@@ -40,6 +41,7 @@ export default function WorkoutDetailPage() {
   const router = useRouter()
   const params = useParams()
   const supabase = createSupabaseBrowserClient()
+  const { isMobile, isTablet } = useBreakpoint()
 
   useEffect(() => {
     async function load() {
@@ -85,26 +87,26 @@ export default function WorkoutDetailPage() {
         <button onClick={() => router.push('/workouts')} style={{ background: 'none', border: 'none', color: 'var(--silver)', fontSize: '0.8rem', cursor: 'pointer', marginBottom: '16px', padding: 0 }}>
           ← Back to Library
         </button>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+        <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'flex-end', gap: isMobile ? '12px' : '0' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
               <span style={{ fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '4px 12px', borderRadius: '20px', background: `${sportColor}18`, color: sportColor, border: `1px solid ${sportColor}35` }}>
                 {sport === 'swim' ? '🏊' : sport === 'bike' ? '🚴' : '🏃'} {sport}
               </span>
             </div>
-            <h1 style={{ fontFamily: 'Cormorant Garant, serif', fontSize: '2.8rem', fontWeight: 600, color: 'var(--platinum)' }}>
+            <h1 style={{ fontFamily: 'Cormorant Garant, serif', fontSize: isMobile ? '2rem' : '2.8rem', fontWeight: 600, color: 'var(--platinum)' }}>
               {workout.name}
             </h1>
           </div>
           {role === 'coach' && (
-            <button onClick={handleDelete} disabled={deleting} style={{ background: 'none', border: '1px solid rgba(219,74,106,0.3)', color: '#DB4A6A', borderRadius: '8px', padding: '10px 18px', cursor: 'pointer', fontSize: '0.8rem' }}>
+            <button onClick={handleDelete} disabled={deleting} style={{ background: 'none', border: '1px solid rgba(219,74,106,0.3)', color: '#DB4A6A', borderRadius: '8px', padding: '10px 18px', cursor: 'pointer', fontSize: '0.8rem', width: isMobile ? '100%' : 'auto' }}>
               {deleting ? 'Deleting...' : 'Delete Workout'}
             </button>
           )}
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile || isTablet ? '1fr' : '1fr 320px', gap: '24px' }}>
         <div>
           {totalSecs > 0 && (
             <div className="fade-up-1" style={{ marginBottom: '24px' }}>
@@ -124,7 +126,7 @@ export default function WorkoutDetailPage() {
                 const zone = iv.heart_rate_zone ?? 3
                 const zoneColor = ZONE_COLORS[zone] ?? sportColor
                 return (
-                  <div key={iv.id ?? idx} style={{ display: 'grid', gridTemplateColumns: '32px 1fr auto', gap: '16px', alignItems: 'center', padding: '14px 16px', borderRadius: '10px', background: 'rgba(255,255,255,0.02)', border: `1px solid ${zoneColor}25`, borderLeft: `3px solid ${zoneColor}` }}>
+                  <div key={iv.id ?? idx} style={{ display: 'grid', gridTemplateColumns: isMobile ? '24px 1fr' : '32px 1fr auto', gap: '16px', alignItems: 'center', padding: '14px 16px', borderRadius: '10px', background: 'rgba(255,255,255,0.02)', border: `1px solid ${zoneColor}25`, borderLeft: `3px solid ${zoneColor}` }}>
                     <div style={{ fontFamily: 'DM Mono, monospace', fontSize: '0.75rem', color: 'var(--silver-dim)', textAlign: 'center' }}>{idx + 1}</div>
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
@@ -138,9 +140,11 @@ export default function WorkoutDetailPage() {
                         {iv.pace_target && <span style={{ fontSize: '0.8rem', color: 'var(--gold)' }}>👟 {iv.pace_target} min/km</span>}
                       </div>
                     </div>
-                    <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: `${zoneColor}20`, border: `1px solid ${zoneColor}40`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <span style={{ fontSize: '0.6rem', color: zoneColor, fontWeight: 700 }}>Z{zone}</span>
-                    </div>
+                    {!isMobile && (
+                      <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: `${zoneColor}20`, border: `1px solid ${zoneColor}40`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <span style={{ fontSize: '0.6rem', color: zoneColor, fontWeight: 700 }}>Z{zone}</span>
+                      </div>
+                    )}
                   </div>
                 )
               })}

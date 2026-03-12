@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
+import { useBreakpoint } from '@/hooks/useBreakpoint'
 
 interface Profile { id: string; full_name: string; role: string; strava_athlete_id?: string; invite_code?: string }
 interface Interval { id: string; type: string; duration_seconds?: number; hr_zone?: number; label?: string }
@@ -24,6 +25,7 @@ export default function AthleteDashboard() {
   const [loading, setLoading]           = useState(true)
   const router   = useRouter()
   const supabase = createSupabaseBrowserClient()
+  const { isMobile, isWide } = useBreakpoint()
 
   useEffect(() => {
     async function load() {
@@ -80,7 +82,7 @@ export default function AthleteDashboard() {
         <p style={{ fontSize: '0.7rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--silver-dim)', marginBottom: '6px' }}>
           Athlete Dashboard
         </p>
-        <h1 style={{ fontFamily: 'Cormorant Garant, serif', fontSize: '2.8rem', fontWeight: 600, color: 'var(--platinum)', lineHeight: 1.1 }}>
+        <h1 style={{ fontFamily: 'Cormorant Garant, serif', fontSize: isMobile ? '2rem' : isWide ? '3.2rem' : '2.8rem', fontWeight: 600, color: 'var(--platinum)', lineHeight: 1.1 }}>
           {getGreeting()}, {profile?.full_name?.split(' ')[0]} 👋
         </h1>
         <p style={{ color: 'var(--silver)', marginTop: '6px' }}>
@@ -101,7 +103,7 @@ export default function AthleteDashboard() {
             <p style={{ color: 'var(--silver)', fontSize: '0.9rem' }}>No workout scheduled. Recovery is training too.</p>
           </div>
         ) : (
-          <div className="card-luxury" style={{ padding: '28px' }}>
+          <div className="card-luxury" style={{ padding: isMobile ? '20px 16px' : '28px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
@@ -186,14 +188,15 @@ export default function AthleteDashboard() {
         <p style={{ fontSize: '0.7rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--silver-dim)', marginBottom: '12px' }}>
           This Week
         </p>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px' }}>
+        <div style={{ overflowX: isMobile ? 'auto' : 'visible' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px', minWidth: isMobile ? '480px' : 'auto' }}>
           {weekDays.map((day, i) => {
             const dateStr = day.toISOString().split('T')[0]
             const workout = weekWorkouts.find(w => w.scheduled_date === dateStr)
             const isToday = dateStr === new Date().toISOString().split('T')[0]
             return (
               <div key={i} className="card-luxury" style={{
-                padding: '14px 10px', textAlign: 'center', minHeight: '90px',
+                padding: isMobile ? '8px 4px' : '14px 10px', textAlign: 'center', minHeight: isMobile ? '70px' : '90px',
                 borderColor: isToday ? 'rgba(201,168,76,0.4)' : undefined,
                 background: isToday ? 'rgba(201,168,76,0.05)' : undefined,
               }}>
@@ -232,6 +235,7 @@ export default function AthleteDashboard() {
               </div>
             )
           })}
+        </div>
         </div>
         <div style={{ display: 'flex', gap: '20px', marginTop: '12px' }}>
           {[

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
+import { useBreakpoint } from '@/hooks/useBreakpoint'
 
 interface Profile {
   id: string
@@ -19,6 +20,7 @@ export default function CoachDashboard() {
   const [showInviteModal, setShowInviteModal] = useState(false)
   const router   = useRouter()
   const supabase = createSupabaseBrowserClient()
+  const { isMobile, isWide } = useBreakpoint()
 
   useEffect(() => {
     async function load() {
@@ -45,7 +47,7 @@ export default function CoachDashboard() {
         <p style={{ fontSize: '0.7rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--silver-dim)', marginBottom: '6px' }}>
           Coach Dashboard
         </p>
-        <h1 style={{ fontFamily: 'Cormorant Garant, serif', fontSize: '2.8rem', fontWeight: 600, color: 'var(--platinum)', lineHeight: 1.1 }}>
+        <h1 style={{ fontFamily: 'Cormorant Garant, serif', fontSize: isMobile ? '2rem' : isWide ? '3.2rem' : '2.8rem', fontWeight: 600, color: 'var(--platinum)', lineHeight: 1.1 }}>
           {greeting}, {profile?.full_name?.split(' ')[0]} 👋
         </h1>
         <p style={{ color: 'var(--silver)', marginTop: '6px', fontSize: '0.95rem' }}>
@@ -54,7 +56,7 @@ export default function CoachDashboard() {
       </div>
 
       {/* ── STAT CARDS ── */}
-      <div className="fade-up-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '32px' }}>
+      <div className="fade-up-1" style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: '16px', marginBottom: '32px' }}>
         {[
           { label: 'Total Athletes',      value: stats.totalAthletes,    icon: '🏊' },
           { label: 'Workouts This Week',  value: stats.workoutsThisWeek, icon: '📋' },
@@ -74,7 +76,7 @@ export default function CoachDashboard() {
       </div>
 
       {/* ── MAIN GRID ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 320px', gap: '24px' }}>
 
         {/* Athletes */}
         <div className="fade-up-2 card-luxury" style={{ padding: '28px' }}>
@@ -127,7 +129,7 @@ export default function CoachDashboard() {
                       </div>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', gap: '8px' }}>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: isMobile ? 'flex-start' : 'flex-end' }}>
                     <button
                       onClick={() => router.push(`/calendar?athlete=${athlete.id}`)}
                       className="btn-ghost"
@@ -245,7 +247,7 @@ export default function CoachDashboard() {
           <div
             onClick={e => e.stopPropagation()}
             className="card-luxury"
-            style={{ width: '100%', maxWidth: '480px', padding: '36px' }}
+            style={{ width: '100%', maxWidth: '480px', padding: isMobile ? '24px 20px' : '36px' }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
               <h2 style={{ fontFamily: 'Cormorant Garant, serif', fontSize: '1.8rem', fontWeight: 600 }}>Add an Athlete</h2>

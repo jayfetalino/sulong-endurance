@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
+import { useBreakpoint } from '@/hooks/useBreakpoint'
 
 interface Activity {
   id: string
@@ -55,6 +56,7 @@ export default function ActivitiesPage() {
   const [filter, setFilter]         = useState<string>('all')
   const router   = useRouter()
   const supabase = createSupabaseBrowserClient()
+  const { isMobile } = useBreakpoint()
 
   useEffect(() => {
     async function load() {
@@ -83,22 +85,22 @@ export default function ActivitiesPage() {
     <div style={{ fontFamily: 'DM Sans, sans-serif' }}>
 
       {/* ── HEADER ── */}
-      <div className="fade-up" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '32px' }}>
+      <div className="fade-up" style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'flex-end', gap: isMobile ? '12px' : '0', marginBottom: '32px' }}>
         <div>
           <p style={{ fontSize: '0.7rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--silver-dim)', marginBottom: '6px' }}>Activity Log</p>
-          <h1 style={{ fontFamily: 'Cormorant Garant, serif', fontSize: '2.5rem', fontWeight: 600, color: 'var(--platinum)' }}>Your Activities</h1>
+          <h1 style={{ fontFamily: 'Cormorant Garant, serif', fontSize: isMobile ? '2rem' : '2.5rem', fontWeight: 600, color: 'var(--platinum)' }}>Your Activities</h1>
         </div>
-        <button onClick={() => router.push('/athlete')} className="btn-ghost" style={{ padding: '10px 18px', borderRadius: '8px' }}>← Dashboard</button>
+        <button onClick={() => router.push('/athlete')} className="btn-ghost" style={{ padding: '10px 18px', borderRadius: '8px', width: isMobile ? '100%' : 'auto' }}>← Dashboard</button>
       </div>
 
       {/* ── SUMMARY STATS ── */}
-      <div className="fade-up-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '28px' }}>
+      <div className="fade-up-1" style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '16px', marginBottom: '28px' }}>
         {[
           { label: 'Total Distance', value: `${(totalDistance / 1000).toFixed(0)}km` },
           { label: 'Total Time', value: formatDuration(totalDuration) },
           { label: 'Total TSS', value: Math.round(totalTSS).toString() },
         ].map(stat => (
-          <div key={stat.label} className="card-luxury" style={{ padding: '20px 24px' }}>
+          <div key={stat.label} className="card-luxury" style={{ padding: isMobile ? '14px 16px' : '20px 24px' }}>
             <div style={{ fontFamily: 'Cormorant Garant, serif', fontSize: '2rem', fontWeight: 600, color: 'var(--gold)', marginBottom: '4px' }}>{stat.value}</div>
             <div style={{ fontSize: '0.65rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--silver-dim)' }}>{stat.label}</div>
           </div>
@@ -147,7 +149,7 @@ export default function ActivitiesPage() {
             return (
               <div key={activity.id} style={{
                 display: 'grid',
-                gridTemplateColumns: '48px 1fr auto',
+                gridTemplateColumns: isMobile ? '40px 1fr' : '48px 1fr auto',
                 gap: '16px',
                 alignItems: 'center',
                 padding: '16px 20px',
@@ -165,7 +167,7 @@ export default function ActivitiesPage() {
                 {/* Details */}
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
-                    <h3 style={{ fontFamily: 'Cormorant Garant, serif', fontSize: '1.15rem', fontWeight: 600, color: 'var(--platinum)' }}>
+                    <h3 style={{ fontFamily: 'Cormorant Garant, serif', fontSize: isMobile ? '1rem' : '1.15rem', fontWeight: 600, color: 'var(--platinum)' }}>
                       {activity.name}
                     </h3>
                     <span style={{ fontSize: '0.65rem', color, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
@@ -190,7 +192,7 @@ export default function ActivitiesPage() {
                 </div>
 
                 {/* TSS */}
-                {activity.tss > 0 && (
+                {activity.tss > 0 && !isMobile && (
                   <div style={{ textAlign: 'right' }}>
                     <div style={{ fontFamily: 'Cormorant Garant, serif', fontSize: '1.5rem', fontWeight: 600, color: 'var(--gold)' }}>
                       {Math.round(activity.tss)}

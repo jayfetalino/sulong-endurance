@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
 import Link from 'next/link'
+import { useBreakpoint } from '@/hooks/useBreakpoint'
 
 export default function LoginPage() {
   const [email, setEmail]       = useState('')
@@ -14,6 +15,7 @@ export default function LoginPage() {
   const [loading, setLoading]   = useState(false)
   const router   = useRouter()
   const supabase = createSupabaseBrowserClient()
+  const { isMobile } = useBreakpoint()
 
   async function handleLogin() {
     setLoading(true)
@@ -35,7 +37,7 @@ export default function LoginPage() {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      padding: '24px',
+      padding: isMobile ? '16px' : '24px',
     }}>
       {/* Radial glow */}
       <div style={{
@@ -50,7 +52,7 @@ export default function LoginPage() {
 
     {/* Logo */}
      <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-          <img src="sulong-logo-transparent.png" alt="Sulong" style={{ width: '360px', height: 'auto', marginBottom: '0px', textAlign: 'center' }} />
+          <img src="sulong-logo-transparent.png" alt="Sulong" style={{ width: isMobile ? '200px' : '360px', height: 'auto', marginBottom: '0px', textAlign: 'center' }} />
           <div style={{
             fontFamily: 'DM Sans, sans-serif',
             fontSize: '0.6rem',
@@ -70,7 +72,7 @@ export default function LoginPage() {
          
 
         {/* Card */}
-        <div className="card-luxury" style={{ padding: '40px' }}>
+        <div className="card-luxury" style={{ padding: isMobile ? '24px 20px' : '40px' }}>
           <h1 style={{
             fontFamily: 'Cormorant Garant, serif',
             fontSize: '2rem',

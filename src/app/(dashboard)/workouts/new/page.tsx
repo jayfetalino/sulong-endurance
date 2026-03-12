@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
 import type { Sport, Interval } from '@/types'
+import { useBreakpoint } from '@/hooks/useBreakpoint'
 
 type IntervalType = 'warmup' | 'work' | 'rest' | 'cooldown'
 type DurationUnit  = 'minutes' | 'seconds'
@@ -61,6 +62,7 @@ export default function WorkoutBuilderPage() {
   const [saving, setSaving]       = useState(false)
   const router   = useRouter()
   const supabase = createSupabaseBrowserClient()
+  const { isMobile, isTablet } = useBreakpoint()
 
   function updateInterval(id: string, updates: Partial<IntervalRow>) {
     setIntervals(prev => prev.map(iv => iv.id === id ? { ...iv, ...updates } : iv))
@@ -111,10 +113,10 @@ export default function WorkoutBuilderPage() {
     <div style={{ fontFamily: 'DM Sans, sans-serif' }}>
       <div className="fade-up" style={{ marginBottom: '32px' }}>
         <p style={{ fontSize: '0.7rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--silver-dim)', marginBottom: '6px' }}>Workout Builder</p>
-        <h1 style={{ fontFamily: 'Cormorant Garant, serif', fontSize: '2.5rem', fontWeight: 600, color: 'var(--platinum)' }}>Build a Workout</h1>
+        <h1 style={{ fontFamily: 'Cormorant Garant, serif', fontSize: isMobile ? '2rem' : '2.5rem', fontWeight: 600, color: 'var(--platinum)' }}>Build a Workout</h1>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '340px 1fr', gap: '24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile || isTablet ? '1fr' : '340px 1fr', gap: '24px' }}>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <div className="fade-up-1 card-luxury" style={{ padding: '24px' }}>
@@ -174,7 +176,7 @@ export default function WorkoutBuilderPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {intervals.map((iv, idx) => (
                 <div key={iv.id} style={{ padding: '16px', borderRadius: '12px', background: 'rgba(255,255,255,0.02)', border: `1px solid ${ZONE_COLORS[iv.hr_zone]}30`, borderLeft: `3px solid ${ZONE_COLORS[iv.hr_zone]}` }}>
-                  <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', alignItems: 'center', flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
                     <select value={iv.type} onChange={e => updateInterval(iv.id, { type: e.target.value as IntervalType })} style={{ background: 'var(--obsidian-4)', border: '1px solid rgba(201,168,76,0.2)', color: 'var(--platinum)', borderRadius: '6px', padding: '6px 10px', fontSize: '0.8rem', outline: 'none' }}>
                       <option value="warmup">Warmup</option>
                       <option value="work">Work</option>
@@ -210,7 +212,7 @@ export default function WorkoutBuilderPage() {
                     )}
                   </div>
 
-                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
                     <span style={{ fontSize: '0.65rem', color: 'var(--silver-dim)', letterSpacing: '0.08em', textTransform: 'uppercase', marginRight: '4px' }}>Zone:</span>
                     {([1,2,3,4,5] as HRZone[]).map(z => (
                       <button key={z} onClick={() => updateInterval(iv.id, { hr_zone: z })} style={{ width: '32px', height: '32px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700, background: iv.hr_zone === z ? ZONE_COLORS[z] : `${ZONE_COLORS[z]}25`, color: iv.hr_zone === z ? '#0A0A0F' : ZONE_COLORS[z], transition: 'all 0.15s' }}>{z}</button>

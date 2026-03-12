@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
 import type { Workout } from '@/types'
+import { useBreakpoint } from '@/hooks/useBreakpoint'
 
 const SPORT_COLORS: Record<string, string> = {
   swim: '#4A9EDB', bike: '#E8A84C', run: '#DB4A6A', brick: '#A84ADB',
@@ -30,6 +31,7 @@ export default function WorkoutsPage() {
   const [loading, setLoading]   = useState(true)
   const router   = useRouter()
   const supabase = createSupabaseBrowserClient()
+  const { isMobile, isWide } = useBreakpoint()
 
   useEffect(() => {
     async function load() {
@@ -50,19 +52,19 @@ export default function WorkoutsPage() {
     <div style={{ fontFamily: 'DM Sans, sans-serif' }}>
 
       {/* ── HEADER ── */}
-      <div className="fade-up" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '36px' }}>
+      <div className="fade-up" style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'flex-end', gap: isMobile ? '12px' : '0', marginBottom: '36px' }}>
         <div>
           <p style={{ fontSize: '0.7rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--silver-dim)', marginBottom: '6px' }}>
             Workout Library
           </p>
-          <h1 style={{ fontFamily: 'Cormorant Garant, serif', fontSize: '2.5rem', fontWeight: 600, color: 'var(--platinum)' }}>
+          <h1 style={{ fontFamily: 'Cormorant Garant, serif', fontSize: isMobile ? '2rem' : '2.5rem', fontWeight: 600, color: 'var(--platinum)' }}>
             Your Workouts
           </h1>
         </div>
         <button
           onClick={() => router.push('/workouts/new')}
           className="btn-gold"
-          style={{ padding: '12px 24px', borderRadius: '10px', border: 'none' }}
+          style={{ padding: '12px 24px', borderRadius: '10px', border: 'none', width: isMobile ? '100%' : 'auto' }}
         >
           + New Workout
         </button>
@@ -99,7 +101,7 @@ export default function WorkoutsPage() {
 
       {/* ── WORKOUT GRID ── */}
       {!loading && workouts.length > 0 && (
-        <div className="fade-up-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
+        <div className="fade-up-1" style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : isWide ? 'repeat(auto-fill, minmax(340px, 1fr))' : 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
           {workouts.map(workout => {
             const sport = workout.sport ?? 'run'
             const color = SPORT_COLORS[sport] ?? '#4A9EDB'

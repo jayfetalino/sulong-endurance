@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
 import type { Workout, ScheduledWorkout, Profile } from '@/types'
+import { useBreakpoint } from '@/hooks/useBreakpoint'
 
 type CalendarView = 'week' | 'month'
 
@@ -52,6 +53,7 @@ export default function CalendarPage() {
 
   const router   = useRouter()
   const supabase = createSupabaseBrowserClient()
+  const { isMobile } = useBreakpoint()
 
   useEffect(() => { loadData() }, [currentDate, view])
 
@@ -169,16 +171,16 @@ export default function CalendarPage() {
     <div style={{ fontFamily: 'DM Sans, sans-serif' }}>
 
       {/* ── HEADER ── */}
-      <div className="fade-up" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '32px' }}>
+      <div className="fade-up" style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'flex-end', gap: isMobile ? '16px' : '0', marginBottom: '32px' }}>
         <div>
           <p style={{ fontSize: '0.7rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--silver-dim)', marginBottom: '6px' }}>
             Training Calendar
           </p>
-          <h1 style={{ fontFamily: 'Cormorant Garant, serif', fontSize: '2.5rem', fontWeight: 600, color: 'var(--platinum)' }}>
+          <h1 style={{ fontFamily: 'Cormorant Garant, serif', fontSize: isMobile ? '1.8rem' : '2.5rem', fontWeight: 600, color: 'var(--platinum)' }}>
             {MONTH_NAMES[currentDate.getMonth()]} {currentDate.getFullYear()}
           </h1>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', gap: '6px' }}>
             <button onClick={() => navigate(-1)} className="btn-ghost" style={{ padding: '8px 14px', borderRadius: '8px' }}>←</button>
             <button onClick={() => setCurrentDate(new Date())} className="btn-ghost" style={{ padding: '8px 14px', borderRadius: '8px' }}>Today</button>
@@ -200,7 +202,8 @@ export default function CalendarPage() {
       </div>
 
       {/* ── DAY NAME HEADERS ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px', marginBottom: '8px' }}>
+      <div style={{ overflowX: isMobile ? 'auto' : 'visible' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px', marginBottom: '8px', minWidth: isMobile ? '560px' : 'auto' }}>
         {DAY_NAMES.map(d => (
           <div key={d} style={{ textAlign: 'center', fontSize: '0.65rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--silver-dim)', padding: '6px 0' }}>
             {d}
@@ -209,7 +212,7 @@ export default function CalendarPage() {
       </div>
 
       {/* ── CALENDAR GRID ── */}
-      <div className="fade-up-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px' }}>
+      <div className="fade-up-1" style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px', minWidth: isMobile ? '560px' : 'auto' }}>
         {cells.map((cell, i) => {
           const dateStr = toDateString(cell.date)
           const isDragOver = dragOverDate === dateStr
@@ -221,8 +224,8 @@ export default function CalendarPage() {
               onDragLeave={() => setDragOverDate(null)}
               onDrop={e => { e.preventDefault(); handleDrop(dateStr) }}
               style={{
-                minHeight: view === 'month' ? '110px' : '160px',
-                padding: '10px',
+                minHeight: isMobile ? '70px' : (view === 'month' ? '110px' : '160px'),
+                padding: isMobile ? '6px' : '10px',
                 borderRadius: '12px',
                 border: isDragOver
                   ? '1px solid rgba(201,168,76,0.6)'
@@ -303,9 +306,10 @@ export default function CalendarPage() {
           )
         })}
       </div>
+      </div>
 
       {/* ── ZONE LEGEND ── */}
-      <div className="fade-up-2" style={{ display: 'flex', gap: '16px', marginTop: '20px', alignItems: 'center' }}>
+      <div className="fade-up-2" style={{ display: 'flex', gap: isMobile ? '10px' : '16px', marginTop: '20px', alignItems: 'center', flexWrap: 'wrap' }}>
         <span style={{ fontSize: '0.65rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--silver-dim)' }}>Zones:</span>
         {Object.entries(ZONE_COLORS).map(([zone, color]) => (
           <div key={zone} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
@@ -329,7 +333,7 @@ export default function CalendarPage() {
           onClick={() => setShowModal(false)}
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '24px' }}
         >
-          <div onClick={e => e.stopPropagation()} className="card-luxury" style={{ width: '100%', maxWidth: '480px', padding: '36px' }}>
+          <div onClick={e => e.stopPropagation()} className="card-luxury" style={{ width: '100%', maxWidth: '480px', padding: isMobile ? '20px' : '36px' }}>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
               <h2 style={{ fontFamily: 'Cormorant Garant, serif', fontSize: '1.8rem', fontWeight: 600, color: 'var(--platinum)' }}>
