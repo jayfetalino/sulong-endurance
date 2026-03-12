@@ -193,7 +193,7 @@ export default function AthleteDashboard() {
             const isToday = dateStr === new Date().toISOString().split('T')[0]
             return (
               <div key={i} className="card-luxury" style={{
-                padding: '14px 10px', textAlign: 'center',
+                padding: '14px 10px', textAlign: 'center', minHeight: '90px',
                 borderColor: isToday ? 'rgba(201,168,76,0.4)' : undefined,
                 background: isToday ? 'rgba(201,168,76,0.05)' : undefined,
               }}>
@@ -203,9 +203,31 @@ export default function AthleteDashboard() {
                 <div style={{ fontFamily: 'Cormorant Garant, serif', fontSize: '1.4rem', fontWeight: 600, color: isToday ? 'var(--gold)' : 'var(--platinum)' }}>
                   {day.getDate()}
                 </div>
-                <div style={{ marginTop: '8px', height: '6px', width: '6px', borderRadius: '50%', margin: '8px auto 0', background: workout ? SPORT_COLORS[workout.workout?.sport] : 'transparent', border: workout ? 'none' : '1px solid var(--silver-dim)' }} />
-                {workout?.status === 'completed' && (
-                  <div style={{ fontSize: '0.6rem', color: '#4ADB8A', marginTop: '4px' }}>✓</div>
+                  {workout ? (
+                  <button
+                    onClick={() => router.push(`/workouts/${workout.workout.id}`)}
+                    style={{
+                      marginTop: '8px',
+                      background: 'none',
+                      border: 'none',
+                      padding: '4px 0',
+                      cursor: 'pointer',
+                      width: '100%',
+                      fontSize: '0.6rem',
+                      fontWeight: 600,
+                      color: workout.status === 'completed' ? '#4ADB8A' : SPORT_COLORS[workout.workout?.sport],
+                      lineHeight: 1.3,
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                      textAlign: 'center',
+                    }}
+                  >
+                    {workout.status === 'completed' ? '✓ ' : ''}{workout.workout?.name}
+                  </button>
+                ) : (
+                  <div style={{ marginTop: '8px', height: '24px' }} />
                 )}
               </div>
             )
