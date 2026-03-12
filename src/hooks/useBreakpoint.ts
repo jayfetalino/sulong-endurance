@@ -2,17 +2,21 @@
 import { useState, useEffect } from 'react'
 
 export function useBreakpoint() {
-  const [width, setWidth] = useState(0) // mobile-first SSR default
+  const [bp, setBp] = useState({ isMobile: true, isTablet: false, isDesktop: false, isWide: false })
+
   useEffect(() => {
-    function update() { setWidth(window.innerWidth) }
+    function update() {
+      setBp({
+        isMobile:  window.matchMedia('(max-width: 767px)').matches,
+        isTablet:  window.matchMedia('(min-width: 768px) and (max-width: 1023px)').matches,
+        isDesktop: window.matchMedia('(min-width: 1024px) and (max-width: 1439px)').matches,
+        isWide:    window.matchMedia('(min-width: 1440px)').matches,
+      })
+    }
     update()
     window.addEventListener('resize', update)
     return () => window.removeEventListener('resize', update)
   }, [])
-  return {
-    isMobile:  width < 768,
-    isTablet:  width >= 768 && width < 1024,
-    isDesktop: width >= 1024 && width < 1440,
-    isWide:    width >= 1440,
-  }
+
+  return bp
 }
