@@ -224,8 +224,19 @@ export default function AthleteDashboard() {
         </div>
       </div>
 
+      {/* ── VIEW ALL WORKOUTS ── */}
+      <div className="fade-up-3" style={{ marginBottom: '28px' }}>
+        <button
+          onClick={() => router.push('/athlete/workouts')}
+          className="btn-ghost"
+          style={{ width: '100%', padding: '14px', borderRadius: '10px', fontSize: '0.8rem', letterSpacing: '0.08em' }}
+        >
+          View All Workouts →
+        </button>
+      </div>
+
       {/* ── STRAVA CONNECT ── */}
-      <div className="fade-up-3">
+      <div className="fade-up-4">
         <p style={{ fontSize: '0.7rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--silver-dim)', marginBottom: '12px' }}>
           Connect Apps
         </p>
