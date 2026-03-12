@@ -1,4 +1,4 @@
-import type { Metadata, Viewport } from "next";
+import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -13,14 +13,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Sulong — Endurance Training System",
-  description: "Precision coaching for triathletes, cyclists, swimmers, and runners.",
+  title: 'Sulong Endurance',
+  description: 'Elite Triathlon Coaching Platform',
 };
 
-export const viewport: Viewport = {
-  width: "device-width",
+export const viewport = {
+  width: 'device-width',
   initialScale: 1,
-  viewportFit: "cover",
+  maximumScale: 1,
 };
 
 export default function RootLayout({
