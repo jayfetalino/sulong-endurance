@@ -6,13 +6,6 @@ import { useRouter } from 'next/navigation'
 import { useSearchParams } from 'next/navigation'
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
 import Link from 'next/link'
-// Tell Next.js to always render this page dynamically (in browser)
-// Never pre-render on server — we use browser APIs like useSearchParams
-
-
-// ── We split into two components because useSearchParams()
-// requires a Suspense wrapper in Next.js production builds.
-// Inner = the actual form, Outer = the wrapper ──────────────
 
 function SignupForm() {
   const searchParams = useSearchParams()
@@ -63,10 +56,7 @@ function SignupForm() {
       coachId = coachData.id
     }
 
-    const { data, error: signUpError } = await supabase.auth.signUp({
-      email,
-      password,
-    })
+    const { data, error: signUpError } = await supabase.auth.signUp({ email, password })
 
     if (signUpError) {
       setError(signUpError.message)
@@ -75,13 +65,12 @@ function SignupForm() {
     }
 
     if (data.user) {
-      const { error: profileError } = await supabase
-        .rpc('create_profile', {
-          user_id:      data.user.id,
-          user_name:    fullName.trim(),
-          user_role:    role,
-          user_coach_id: coachId,
-        })
+      const { error: profileError } = await supabase.rpc('create_profile', {
+        user_id:       data.user.id,
+        user_name:     fullName.trim(),
+        user_role:     role,
+        user_coach_id: coachId,
+      })
 
       if (profileError) {
         setError(profileError.message)
@@ -93,96 +82,159 @@ function SignupForm() {
     router.push(role === 'coach' ? '/coach' : '/athlete')
   }
 
-  return (
-    <div className="min-h-screen bg-gray-950 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+  const labelStyle: React.CSSProperties = {
+    display: 'block', fontSize: '0.65rem', fontWeight: 500,
+    letterSpacing: '0.12em', textTransform: 'uppercase',
+    color: 'var(--silver)', marginBottom: '8px',
+  }
 
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-white mb-1">Sulong Endurance</h1>
-          <p className="text-gray-400">Create your account</p>
+  return (
+    <div style={{
+      minHeight: '100vh',
+      background: 'var(--obsidian)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '24px',
+    }}>
+      {/* Radial glow */}
+      <div style={{
+        position: 'fixed', top: '-10%', left: '50%',
+        transform: 'translateX(-50%)',
+        width: '700px', height: '700px',
+        background: 'radial-gradient(circle, rgba(201,168,76,0.05) 0%, transparent 70%)',
+        pointerEvents: 'none',
+      }} />
+
+      <div style={{ width: '100%', maxWidth: '420px' }} className="fade-up">
+
+        {/* Logo */}
+        <div style={{ textAlign: 'center', marginBottom: '16px' }}>
+          <img src="/sulong-logo-transparent.png" alt="Sulong" style={{ width: '360px', height: 'auto' }} />
+          <div style={{
+            fontFamily: 'DM Sans, sans-serif',
+            fontSize: '0.6rem',
+            letterSpacing: '0.28em',
+            textTransform: 'uppercase',
+            color: 'var(--silver-dim)',
+            marginTop: '0px',
+          }}>
+            Endurance Training System
+          </div>
+          <div style={{
+            height: '1px',
+            background: 'linear-gradient(90deg, transparent, rgba(201,168,76,0.35), transparent)',
+            marginTop: '10px',
+          }} />
         </div>
 
-        <div className="bg-gray-900 border border-gray-800 rounded-2xl p-8">
+        {/* Card */}
+        <div className="card-luxury" style={{ padding: '40px' }}>
+          <h1 style={{
+            fontFamily: 'Cormorant Garant, serif',
+            fontSize: '2rem',
+            fontWeight: 600,
+            color: 'var(--platinum)',
+            marginBottom: '4px',
+          }}>
+            Create account
+          </h1>
+          <p style={{ color: 'var(--silver)', fontSize: '0.875rem', marginBottom: '28px' }}>
+            Join the Sulong training platform
+          </p>
 
           {error && (
-            <div className="bg-red-950 border border-red-800 text-red-400 rounded-lg p-3 mb-5 text-sm">
+            <div style={{
+              background: 'rgba(180,40,40,0.12)',
+              border: '1px solid rgba(180,40,40,0.35)',
+              color: '#FF8080',
+              borderRadius: '10px',
+              padding: '12px 16px',
+              fontSize: '0.85rem',
+              marginBottom: '20px',
+            }}>
               {error}
             </div>
           )}
 
-          <div className="mb-4">
-            <label className="block text-sm text-gray-300 mb-1.5">Full Name</label>
+          {/* Full Name */}
+          <div style={{ marginBottom: '16px' }}>
+            <label style={labelStyle}>Full Name</label>
             <input
               type="text"
               value={fullName}
               onChange={e => setFullName(e.target.value)}
               placeholder="Jane Smith"
-              className="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-4 py-3 focus:outline-none focus:border-cyan-500 transition-colors"
+              className="input-luxury"
             />
           </div>
 
-          <div className="mb-4">
-            <label className="block text-sm text-gray-300 mb-1.5">Email</label>
+          {/* Email */}
+          <div style={{ marginBottom: '16px' }}>
+            <label style={labelStyle}>Email</label>
             <input
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
               placeholder="you@example.com"
-              className="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-4 py-3 focus:outline-none focus:border-cyan-500 transition-colors"
+              className="input-luxury"
             />
           </div>
 
-          <div className="mb-4">
-            <label className="block text-sm text-gray-300 mb-1.5">Password</label>
+          {/* Password */}
+          <div style={{ marginBottom: '16px' }}>
+            <label style={labelStyle}>Password</label>
             <input
               type="password"
               value={password}
               onChange={e => setPassword(e.target.value)}
-              placeholder="••••••••"
-              className="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-4 py-3 focus:outline-none focus:border-cyan-500 transition-colors"
+              placeholder="••••••••••"
+              className="input-luxury"
             />
           </div>
 
-          <div className="mb-4">
-            <label className="block text-sm text-gray-300 mb-1.5">I am a...</label>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={() => setRole('athlete')}
-                className={`py-3 rounded-lg border font-medium text-sm transition-colors ${
-                  role === 'athlete'
-                    ? 'bg-cyan-500 border-cyan-500 text-gray-950'
-                    : 'bg-gray-800 border-gray-700 text-gray-300 hover:border-gray-500'
-                }`}
-              >
-                🏊 Athlete
-              </button>
-              <button
-                onClick={() => setRole('coach')}
-                className={`py-3 rounded-lg border font-medium text-sm transition-colors ${
-                  role === 'coach'
-                    ? 'bg-cyan-500 border-cyan-500 text-gray-950'
-                    : 'bg-gray-800 border-gray-700 text-gray-300 hover:border-gray-500'
-                }`}
-              >
-                📋 Coach
-              </button>
+          {/* Role toggle */}
+          <div style={{ marginBottom: '16px' }}>
+            <label style={labelStyle}>I am a...</label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+              {(['athlete', 'coach'] as const).map(r => (
+                <button
+                  key={r}
+                  onClick={() => setRole(r)}
+                  style={{
+                    padding: '12px',
+                    borderRadius: '10px',
+                    border: role === r ? '1px solid rgba(201,168,76,0.5)' : '1px solid rgba(201,168,76,0.12)',
+                    background: role === r ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.02)',
+                    color: role === r ? 'var(--gold)' : 'var(--silver)',
+                    fontFamily: 'DM Sans, sans-serif',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    letterSpacing: '0.05em',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  {r === 'athlete' ? '🏊 Athlete' : '📋 Coach'}
+                </button>
+              ))}
             </div>
           </div>
 
+          {/* Invite code */}
           {role === 'athlete' && (
-            <div className="mb-4">
-              <label className="block text-sm text-gray-300 mb-1.5">
-                Coach Invite Code
-              </label>
+            <div style={{ marginBottom: '16px' }}>
+              <label style={labelStyle}>Coach Invite Code</label>
               <input
                 type="text"
                 value={inviteCode}
                 onChange={e => setInviteCode(e.target.value.toUpperCase())}
-                placeholder="e.g. ABC123"
+                placeholder="ABC123"
                 maxLength={6}
-                className="w-full bg-gray-800 border border-gray-700 text-white rounded-lg px-4 py-3 focus:outline-none focus:border-cyan-500 transition-colors font-mono tracking-widest text-center text-lg uppercase"
+                className="input-luxury"
+                style={{ textAlign: 'center', letterSpacing: '0.3em', fontFamily: 'DM Mono, monospace', fontSize: '1.1rem', textTransform: 'uppercase' }}
               />
-              <p className="text-xs text-gray-500 mt-1.5">
+              <p style={{ fontSize: '0.72rem', color: 'var(--silver-dim)', marginTop: '6px' }}>
                 Get this code from your coach.
               </p>
             </div>
@@ -191,29 +243,41 @@ function SignupForm() {
           <button
             onClick={handleSignup}
             disabled={loading}
-            className="w-full bg-cyan-500 hover:bg-cyan-400 disabled:bg-gray-700 disabled:text-gray-500 text-gray-950 font-bold rounded-lg px-4 py-3 transition-colors mt-2"
+            className="btn-gold"
+            style={{ width: '100%', padding: '14px', borderRadius: '10px', border: 'none', marginTop: '8px' }}
           >
             {loading ? 'Creating account...' : 'Create Account'}
           </button>
 
-          <p className="text-center text-gray-500 text-sm mt-5">
+          <p style={{
+            textAlign: 'center', color: 'var(--silver-dim)',
+            fontSize: '0.8rem', marginTop: '24px',
+          }}>
             Already have an account?{' '}
-            <Link href="/login" className="text-cyan-400 hover:text-cyan-300">
+            <Link href="/login" style={{ color: 'var(--gold)', textDecoration: 'none' }}>
               Sign in
             </Link>
           </p>
         </div>
+
+        <p style={{
+          textAlign: 'center', marginTop: '28px',
+          fontFamily: 'Cormorant Garant, serif',
+          fontStyle: 'italic', fontSize: '0.9rem',
+          color: 'var(--silver-dim)',
+        }}>
+          Train with purpose. Race with confidence.
+        </p>
       </div>
     </div>
   )
 }
 
-// Outer wrapper with Suspense — required for useSearchParams in production
 export default function SignupPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <div className="text-gray-400">Loading...</div>
+      <div style={{ minHeight: '100vh', background: 'var(--obsidian)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ fontFamily: 'Cormorant Garant, serif', fontSize: '1.5rem', color: 'var(--silver)', fontStyle: 'italic' }}>Loading...</div>
       </div>
     }>
       <SignupForm />
