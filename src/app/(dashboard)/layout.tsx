@@ -48,7 +48,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const maxW = isWide ? '1400px' : '1280px'
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--obsidian)' }}>
+    <>
+    <div style={{ minHeight: '100vh', background: 'var(--obsidian)', overflowX: 'hidden' }}>
 
       {/* ── NAV ── */}
       <nav style={{
@@ -147,48 +148,50 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {children}
       </main>
 
-      {/* ── BOTTOM TAB BAR (mobile only) ── */}
-      {isMobile && (
-        <nav style={{
-          position: 'fixed',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: 'calc(64px + env(safe-area-inset-bottom))',
-          background: 'rgba(10,10,15,0.97)',
-          backdropFilter: 'blur(20px)',
-          borderTop: '1px solid rgba(201,168,76,0.15)',
-          display: 'flex',
-          alignItems: 'stretch',
-          zIndex: 50,
-          paddingBottom: 'env(safe-area-inset-bottom)',
-        }}>
-          {links.map(link => {
-            const active = pathname === link.href
-            return (
-              <Link key={link.href} href={link.href} style={{
-                flex: 1,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '3px',
-                textDecoration: 'none',
-                color: active ? 'var(--gold)' : 'var(--silver)',
-                background: active ? 'rgba(201,168,76,0.06)' : 'transparent',
-                borderTop: active ? '2px solid var(--gold)' : '2px solid transparent',
-                transition: 'all 0.2s ease',
-              }}>
-                <span style={{ fontSize: '1.2rem' }}>{link.icon}</span>
-                <span style={{ fontSize: '0.58rem', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-                  {link.label}
-                </span>
-              </Link>
-            )
-          })}
-        </nav>
-      )}
 
     </div>
+
+    {/* ── BOTTOM TAB BAR (mobile only) — outside overflow div to avoid iOS fixed+overflow bug ── */}
+    {isMobile && (
+      <nav style={{
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: 'calc(64px + env(safe-area-inset-bottom))',
+        background: 'rgba(10,10,15,0.97)',
+        backdropFilter: 'blur(20px)',
+        borderTop: '1px solid rgba(201,168,76,0.15)',
+        display: 'flex',
+        alignItems: 'stretch',
+        zIndex: 50,
+        paddingBottom: 'env(safe-area-inset-bottom)',
+      }}>
+        {links.map(link => {
+          const active = pathname === link.href
+          return (
+            <Link key={link.href} href={link.href} style={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '3px',
+              textDecoration: 'none',
+              color: active ? 'var(--gold)' : 'var(--silver)',
+              background: active ? 'rgba(201,168,76,0.06)' : 'transparent',
+              borderTop: active ? '2px solid var(--gold)' : '2px solid transparent',
+              transition: 'all 0.2s ease',
+            }}>
+              <span style={{ fontSize: '1.2rem' }}>{link.icon}</span>
+              <span style={{ fontSize: '0.58rem', fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                {link.label}
+              </span>
+            </Link>
+          )
+        })}
+      </nav>
+    )}
+    </>
   )
 }
