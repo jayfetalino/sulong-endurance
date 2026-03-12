@@ -23,16 +23,12 @@ const TRIATHLETE_DISTANCES = [
 ]
 
 function goalsLabel(athleteType: string): string {
-  if (athleteType === 'Cyclist') return 'Why are you seeking coaching right now?'
-  if (athleteType === 'Swimmer') return 'What do you want to achieve with coaching?'
+  if (athleteType === 'Cyclist') return "What would make you say 'that coaching changed everything'? Let's make it happen"
+  if (athleteType === 'Swimmer') return "What's the big swim goal we're chasing together? Dream big!"
   return 'What is your goal? (e.g. finish time, first race, improvement)'
 }
 
-function goalsPlaceholder(athleteType: string): string {
-  if (athleteType === 'Cyclist')
-    return "What would make you say 'that coaching changed everything'? Let's make it happen"
-  if (athleteType === 'Swimmer')
-    return "What's the big swim goal we're chasing together? Dream big!"
+function goalsPlaceholder(): string {
   return 'Share your goal...'
 }
 
@@ -327,7 +323,7 @@ function SignupForm() {
               <textarea
                 value={coachingGoals}
                 onChange={e => setCoachingGoals(e.target.value)}
-                placeholder={goalsPlaceholder(athleteType)}
+                placeholder={goalsPlaceholder()}
                 rows={3}
                 className="input-luxury"
                 style={{ resize: 'vertical', minHeight: '80px' }}
