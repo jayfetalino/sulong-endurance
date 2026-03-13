@@ -35,9 +35,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   const coachLinks = [
-    { href: '/coach',    label: 'Overview',  icon: '🏠' },
-    { href: '/calendar', label: 'Calendar',  icon: '📅' },
-    { href: '/workouts', label: 'Workouts',  icon: '✏️' },
+    { href: '/coach',           label: 'Overview',  icon: '🏠' },
+    { href: '/coach/athletes',  label: 'Athletes',  icon: '🏊' },
+    { href: '/calendar',        label: 'Calendar',  icon: '📅' },
+    { href: '/workouts',        label: 'Workouts',  icon: '✏️' },
   ]
   const athleteLinks = [
     { href: '/athlete',          label: 'My Training', icon: '🏃' },
