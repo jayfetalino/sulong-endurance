@@ -78,9 +78,25 @@ export default function AthleteWorkoutsPage() {
   }, [refreshKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function markComplete(id: string) {
+    // Optimistic update — move instantly in UI
+    const toMove = upcoming.find(w => w.id === id)
+    if (toMove) {
+      setUpcoming(prev => prev.filter(w => w.id !== id))
+      setCompleted(prev => [{ ...toMove, status: 'completed' }, ...prev])
+    }
+
     const supabase = createSupabaseBrowserClient()
-    await supabase.from('scheduled_workouts').update({ status: 'completed' }).eq('id', id)
-    setRefreshKey(k => k + 1)
+    const { error, count } = await supabase
+      .from('scheduled_workouts')
+      .update({ status: 'completed' })
+      .eq('id', id)
+      .select()
+
+    if (error || count === 0) {
+      // DB update failed — revert optimistic update and re-fetch real state
+      console.error('markComplete failed:', error, 'rows affected:', count)
+      setRefreshKey(k => k + 1)
+    }
   }
 
   if (loading) return (
