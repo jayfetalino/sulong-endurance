@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createSupabaseBrowserClient } from '@/lib/supabase-browser'
 import { useBreakpoint } from '@/hooks/useBreakpoint'
@@ -25,56 +25,62 @@ function formatDate(dateStr: string) {
 }
 
 export default function AthleteWorkoutsPage() {
-  const [upcoming,  setUpcoming]  = useState<ScheduledWorkout[]>([])
-  const [missed,    setMissed]    = useState<ScheduledWorkout[]>([])
-  const [completed, setCompleted] = useState<ScheduledWorkout[]>([])
-  const [loading,   setLoading]   = useState(true)
+  const [upcoming,   setUpcoming]   = useState<ScheduledWorkout[]>([])
+  const [missed,     setMissed]     = useState<ScheduledWorkout[]>([])
+  const [completed,  setCompleted]  = useState<ScheduledWorkout[]>([])
+  const [loading,    setLoading]    = useState(true)
+  const [refreshKey, setRefreshKey] = useState(0)
   const router   = useRouter()
-  const supabase = createSupabaseBrowserClient()
   const { isMobile } = useBreakpoint()
 
-  const load = useCallback(async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { router.push('/login'); return }
+  useEffect(() => {
+    const supabase = createSupabaseBrowserClient()
 
-    // Auto-mark overdue scheduled workouts as missed
-    const today = new Date().toISOString().slice(0, 10)
-    await supabase
-      .from('scheduled_workouts')
-      .update({ status: 'missed' })
-      .eq('athlete_id', user.id)
-      .eq('status', 'scheduled')
-      .lt('scheduled_date', today)
+    async function load() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { router.push('/login'); return }
 
-    // Re-fetch all workouts
-    const { data } = await supabase
-      .from('scheduled_workouts')
-      .select('*, workout:workouts(*)')
-      .eq('athlete_id', user.id)
-      .order('scheduled_date', { ascending: false })
+      const today = new Date().toISOString().slice(0, 10)
 
-    if (data) {
-      setUpcoming(
-        data.filter(w => w.status === 'scheduled' && w.scheduled_date >= today)
-            .sort((a, b) => a.scheduled_date.localeCompare(b.scheduled_date))
-      )
-      setMissed(
-        data.filter(w => w.status === 'missed')
-            .sort((a, b) => b.scheduled_date.localeCompare(a.scheduled_date))
-      )
-      setCompleted(
-        data.filter(w => w.status === 'completed')
-            .sort((a, b) => b.scheduled_date.localeCompare(a.scheduled_date))
-      )
+      // Auto-mark overdue scheduled workouts as missed
+      await supabase
+        .from('scheduled_workouts')
+        .update({ status: 'missed' })
+        .eq('athlete_id', user.id)
+        .eq('status', 'scheduled')
+        .lt('scheduled_date', today)
+
+      // Re-fetch all workouts
+      const { data } = await supabase
+        .from('scheduled_workouts')
+        .select('*, workout:workouts(*)')
+        .eq('athlete_id', user.id)
+        .order('scheduled_date', { ascending: false })
+
+      if (data) {
+        setUpcoming(
+          data.filter(w => w.status === 'scheduled' && w.scheduled_date >= today)
+              .sort((a, b) => a.scheduled_date.localeCompare(b.scheduled_date))
+        )
+        setMissed(
+          data.filter(w => w.status === 'missed')
+              .sort((a, b) => b.scheduled_date.localeCompare(a.scheduled_date))
+        )
+        setCompleted(
+          data.filter(w => w.status === 'completed')
+              .sort((a, b) => b.scheduled_date.localeCompare(a.scheduled_date))
+        )
+      }
+      setLoading(false)
     }
-    setLoading(false)
-  }, [supabase, router])
 
-  useEffect(() => { load() }, [load])
+    load()
+  }, [refreshKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function markComplete(id: string) {
+    const supabase = createSupabaseBrowserClient()
     await supabase.from('scheduled_workouts').update({ status: 'completed' }).eq('id', id)
-    await load()
+    setRefreshKey(k => k + 1)
   }
 
   if (loading) return (
