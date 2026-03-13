@@ -42,6 +42,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const athleteLinks = [
     { href: '/athlete',          label: 'My Training', icon: '🏃' },
     { href: '/athlete/workouts', label: 'Workouts',    icon: '📋' },
+    { href: '/athlete/profile',  label: 'Profile',     icon: '👤' },
   ]
   const links = role === 'coach' ? coachLinks : athleteLinks
 
