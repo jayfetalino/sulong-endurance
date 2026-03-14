@@ -86,15 +86,17 @@ export default function AthleteWorkoutsPage() {
     }
 
     const supabase = createSupabaseBrowserClient()
-    const { error, count } = await supabase
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) { setRefreshKey(k => k + 1); return }
+
+    const { error } = await supabase
       .from('scheduled_workouts')
       .update({ status: 'completed' })
       .eq('id', id)
-      .select()
+      .eq('athlete_id', user.id)
 
     if (error) {
-      // DB update failed — revert optimistic update and re-fetch real state
-      console.error('markComplete failed:', error, 'rows affected:', count)
+      console.error('markComplete failed:', error)
       setRefreshKey(k => k + 1)
     }
   }
