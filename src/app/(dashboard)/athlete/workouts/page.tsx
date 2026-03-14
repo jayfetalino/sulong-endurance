@@ -92,7 +92,7 @@ export default function AthleteWorkoutsPage() {
       .eq('id', id)
       .select()
 
-    if (error || count === 0) {
+    if (error) {
       // DB update failed — revert optimistic update and re-fetch real state
       console.error('markComplete failed:', error, 'rows affected:', count)
       setRefreshKey(k => k + 1)

@@ -134,7 +134,7 @@ export default function CalendarPage() {
       workout_id: assignForm.workoutId,
       scheduled_date: toDateString(selectedDay.date),
       coach_notes: assignForm.notes || null,
-      status: 'pending',
+      status: 'scheduled',
     })
     setSaving(false)
     if (error) {
